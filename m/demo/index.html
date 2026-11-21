@@ -1,0 +1,2557 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<script>/* versão estática: sem servidor para as estatísticas de AR */(function(){var f=window.fetch;window.fetch=function(u){if(typeof u==='string'&&u.indexOf('/api/ar-log')===0)return Promise.resolve(new Response(null,{status:204}));return f.apply(this,arguments)};var b=navigator.sendBeacon&&navigator.sendBeacon.bind(navigator);if(b)navigator.sendBeacon=function(u,d){return String(u).indexOf('/api/ar-log')===0?true:b(u,d)}})();</script>
+<meta charset="utf-8">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Cardápio Digital &amp; 3D 4K</title>
+<meta name="theme-color" content="#F4F7FB">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="modulepreload" href="/vendor/model-viewer.min.js">
+<link rel="preload" href="/vendor/draco/draco_wasm_wrapper.js" as="fetch" crossorigin>
+<link rel="preload" href="/vendor/draco/draco_decoder.wasm" as="fetch" crossorigin>
+<link rel="stylesheet" href="/assets/ar.css?v=1110f">
+<link rel="stylesheet" href="/assets/instant-ar.css?v=1110f">
+<script>window.addEventListener("pageshow", function (e) { if (e.persisted) location.reload(); }); /* aba restaurada do cache do Safari volta com o JS antigo */</script>
+<script src="/assets/iar-math.js?v=1110f" defer></script>
+<script src="/assets/iar-track.js?v=1110f" defer></script>
+<script src="/assets/instant-ar.js?v=1110f" defer></script>
+<script src="/assets/ar.js?v=1110f" defer></script>
+<style>
+  :root {
+    --brand: #2563EB;
+    --brand-text: #FFFFFF;
+    --btn: #0F172A;
+    --btn-text: #FFFFFF;
+    --ink: #0F172A;
+    --muted: #64748B;
+    --cream: #F4F7FB;
+    --card: #FFFFFF;
+    --soft: #DBEAFE;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  [hidden] { display: none !important; }
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    color: var(--ink);
+    background: #DCE5F2;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior-y: none;
+  }
+  body.modal-open { overflow: hidden; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; border: 0; cursor: pointer; background: none; color: inherit; touch-action: manipulation; }
+
+  .app {
+    max-width: 460px;
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 18px 18px 150px;
+    position: relative;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--brand) 20%, var(--cream)) 0%, var(--cream) 340px), var(--cream);
+  }
+  @media (min-width: 520px) {
+    .app {
+      margin: 24px auto;
+      min-height: auto;
+      border-radius: 36px;
+      box-shadow: 0 30px 80px rgba(15, 23, 42, .16);
+    }
+  }
+
+  .top { display: flex; align-items: center; gap: 12px; }
+  .logo {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: var(--brand);
+    color: var(--brand-text);
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    font-size: 18px;
+    overflow: hidden;
+    flex: none;
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--brand) 42%, transparent);
+  }
+  .logo img { width: 100%; height: 100%; object-fit: cover; }
+  .who small { display: block; color: var(--muted); font-size: 12.5px; font-weight: 600; }
+  .who b { font-size: 15px; }
+  .icons { margin-left: auto; display: flex; gap: 8px; }
+  .icon-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--card);
+    display: grid;
+    place-items: center;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, .06);
+    transition: transform .12s ease;
+  }
+  .icon-btn:active { transform: scale(.93); }
+  .icon-btn svg { width: 20px; height: 20px; }
+
+  h1 { font-size: 29px; line-height: 1.12; letter-spacing: -.6px; margin: 20px 0 6px; font-weight: 800; }
+  h1 span { color: var(--brand); }
+  .lead { color: var(--muted); font-size: 14.5px; line-height: 1.45; }
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    font-size: 12.5px;
+    font-weight: 600;
+    background: var(--card);
+    padding: 6px 12px;
+    border-radius: 99px;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, .04);
+  }
+  .status i { width: 8px; height: 8px; border-radius: 50%; background: #16a34a; }
+  .status.off i { background: #dc2626; }
+
+  .search {
+    margin: 18px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--card);
+    border-radius: 18px;
+    padding: 14px 16px;
+    color: var(--muted);
+    box-shadow: 0 2px 10px rgba(15, 23, 42, .04);
+  }
+  .search input { border: 0; outline: 0; font: inherit; flex: 1; background: transparent; color: var(--ink); }
+
+  .feature {
+    position: relative;
+    border-radius: 26px;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--btn) 0%, #1E3A8A 100%);
+    color: var(--btn-text);
+    padding: 20px 0 20px 20px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 40%;
+    gap: 12px;
+    align-items: center;
+    box-shadow: 0 14px 32px rgba(37, 99, 235, .20);
+  }
+  .feature img {
+    width: 128%;
+    max-width: none;
+    aspect-ratio: 1;
+    height: auto;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 6px solid rgba(255, 255, 255, .12);
+    cursor: pointer;
+  }
+  .feature .tag {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    font-size: 11.5px;
+    color: #93C5FD;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+  }
+  .feature h3 { font-size: clamp(17px, 4.8vw, 20px); margin: 7px 0 6px; line-height: 1.2; font-weight: 800; }
+  .feature p { font-size: 12.5px; opacity: .82; line-height: 1.4; }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 99px;
+    padding: 12px 18px;
+    font-weight: 700;
+    font-size: 13.5px;
+    transition: transform .12s ease;
+  }
+  .pill:active { transform: scale(.96); }
+  .pill.brand { background: var(--brand); color: var(--brand-text); margin-top: 14px; box-shadow: 0 6px 18px rgba(37, 99, 235, .38); }
+  .pill.dark { background: var(--btn); color: var(--btn-text); }
+  .pill.light { background: var(--card); color: var(--ink); box-shadow: 0 2px 8px rgba(15, 23, 42, .05); }
+
+  .ctas { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 0 6px; }
+  .chips { display: flex; gap: 10px; overflow-x: auto; padding: 14px 0 4px; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--card);
+    border-radius: 99px;
+    padding: 6px 14px 6px 6px;
+    font-size: 13.5px;
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, .04);
+  }
+  .chip img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; background: var(--cream); }
+  .chip.on { background: var(--brand); color: var(--brand-text); box-shadow: 0 6px 16px rgba(37, 99, 235, .28); }
+
+  h2 { font-size: 18px; margin: 24px 0 12px; display: flex; justify-content: space-between; align-items: baseline; font-weight: 800; }
+  h2 small { font-size: 13px; color: var(--muted); font-weight: 600; }
+
+  .trend { display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none; padding-bottom: 6px; scroll-snap-type: x proximity; }
+  .trend, .chips { user-select: none; cursor: grab; }
+  .trend img, .chips img { -webkit-user-drag: none; }
+  .trend::-webkit-scrollbar { display: none; }
+  .arrows { display: flex; gap: 6px; }
+  .arr {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--card);
+    font-size: 20px;
+    line-height: 1;
+    display: grid;
+    place-items: center;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, .08);
+  }
+  .arr:disabled { opacity: .35; cursor: default; }
+  .add svg, .step button svg, .arr svg { display: block; }
+  .acts { display: flex; align-items: center; gap: 6px; flex: none; }
+  .b3d {
+    width: 34px; height: 34px; border-radius: 50%; flex: none;
+    display: grid; place-items: center;
+    background: linear-gradient(150deg, color-mix(in srgb, var(--btn, #0F172A) 78%, #4b5d86), var(--btn, #0F172A));
+    color: var(--btn-text, #fff);
+    border: 0; cursor: pointer;
+    font-family: inherit; font-weight: 800; font-size: 12.5px; line-height: 1; letter-spacing: -.2px;
+    box-shadow: 0 5px 12px rgba(11, 18, 38, .30), inset 0 0 0 1px rgba(255, 255, 255, .10);
+  }
+  .b3d:active { transform: scale(.92); }
+  body > .ar-sheet { position: fixed; z-index: 400; }
+
+  .tcard {
+    scroll-snap-align: start;
+    flex: none;
+    width: 172px;
+    border-radius: 24px;
+    padding: 12px;
+    background: color-mix(in srgb, var(--brand) 15%, #fff);
+    border: 1px solid rgba(37, 99, 235, .12);
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+  }
+  .tcard:nth-child(2n) { background: color-mix(in srgb, var(--soft) 72%, #fff); }
+  .tcard-img-wrap {
+    position: relative;
+    width: 100%;
+    height: 112px;
+    margin-top: 8px;
+    border-radius: 18px;
+    background: linear-gradient(145deg, #DBEAFE 0%, #EFF6FF 100%);
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .tcard-img-wrap img { width: 100%; height: 100%; object-fit: cover; border-radius: 18px; display: block; }
+  .tcard b { font-size: 13.5px; display: block; line-height: 1.25; }
+  .meta { font-size: 11.5px; color: var(--muted); display: flex; gap: 5px; align-items: center; margin-top: 3px; font-weight: 600; }
+  .star { color: var(--brand); }
+
+  .btn-ar-mini {
+    margin-top: 7px;
+    width: 100%;
+    padding: 7px 10px;
+    border-radius: 12px;
+    background: rgba(37, 99, 235, .10);
+    color: var(--brand);
+    font-size: 11.5px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    transition: background-color .12s ease, transform .12s ease;
+  }
+  .btn-ar-mini:active { transform: scale(.96); background: rgba(37, 99, 235, .18); }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .item {
+    background: linear-gradient(180deg, #EAF2FF 0%, #FFFFFF 62%);
+    border-radius: 22px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: 0 3px 12px rgba(15, 23, 42, .05);
+    border: 1px solid rgba(37, 99, 235, .10);
+  }
+  .item:nth-child(2n) {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--soft) 55%, #fff) 0%, #FFFFFF 65%);
+  }
+  .item-media {
+    position: relative;
+    width: 100%;
+    height: 120px;
+    border-radius: 16px;
+    overflow: hidden;
+    background: linear-gradient(145deg, #DBEAFE 0%, #EFF6FF 100%);
+    cursor: pointer;
+  }
+  .item-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 16px;
+    display: block;
+  }
+  .item b { font-size: 14px; margin-top: 8px; line-height: 1.25; }
+  .item p { font-size: 12px; color: var(--muted); margin: 3px 0 8px; flex: 1; line-height: 1.35; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+  .price { font-weight: 800; font-size: 15px; color: var(--ink); }
+  .add {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--brand);
+    color: var(--brand-text);
+    font-size: 20px;
+    line-height: 1;
+    display: grid;
+    place-items: center;
+    flex: none;
+    box-shadow: 0 4px 10px rgba(37, 99, 235, .25);
+  }
+  .qty {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    min-width: 26px;
+    height: 26px;
+    padding: 0 7px;
+    border-radius: 99px;
+    background: var(--btn);
+    color: var(--btn-text);
+    font-weight: 800;
+    font-size: 13px;
+    display: grid;
+    place-items: center;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, .25);
+    z-index: 3;
+  }
+
+  .info { background: var(--card); border-radius: 24px; padding: 6px 16px; box-shadow: 0 2px 10px rgba(15, 23, 42, .04); }
+  .info a, .info div { display: flex; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid #E2E8F0; font-size: 14px; }
+  .info > :last-child { border-bottom: 0; }
+  .info svg { width: 20px; height: 20px; flex: none; color: var(--brand); }
+
+  .reserve {
+    position: relative;
+    border-radius: 26px;
+    overflow: hidden;
+    margin-top: 12px;
+    color: #fff;
+    padding: 22px;
+    min-height: 170px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+  .reserve img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
+  .reserve::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 20%, rgba(15, 23, 42, .88)); }
+  .reserve > *:not(img) { position: relative; z-index: 1; }
+  .reserve h3 { font-size: 20px; }
+  .reserve p { font-size: 13px; color: rgba(255,255,255,.85); margin: 4px 0 12px; }
+
+  .cart {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 92px;
+    width: min(424px, calc(100% - 36px));
+    background: var(--btn);
+    color: var(--btn-text);
+    border-radius: 20px;
+    padding: 12px 14px;
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    z-index: 15;
+    cursor: pointer;
+    box-shadow: 0 14px 32px rgba(15, 23, 42, .28);
+  }
+  .cart.show { display: flex; }
+  .cart small { opacity: .75; display: block; font-size: 12px; }
+
+  /* Liquid Glass Bottom Navigation (Radar Template) */
+  .nav {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 18px;
+    border-radius: 99px;
+    padding: 8px;
+    display: flex;
+    gap: 6px;
+    z-index: 15;
+    isolation: isolate;
+    background: rgba(255, 255, 255, .75);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, .85);
+    box-shadow: 0 14px 34px rgba(15, 23, 42, .16), inset 0 1px 1px rgba(255, 255, 255, .9);
+  }
+  .nav a {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: var(--ink);
+    transition: transform .18s;
+    position: relative;
+    font-weight: 800;
+    font-size: 13.5px;
+    letter-spacing: -0.3px;
+  }
+  .nav a.nav-3d-btn {
+    background: rgba(37, 99, 235, .12);
+    color: var(--brand);
+    border: 1.5px solid rgba(37, 99, 235, .28);
+  }
+  .nav a:active { transform: scale(.92); }
+  .nav a.on {
+    background: var(--brand);
+    color: var(--brand-text);
+    border-color: transparent;
+    box-shadow: 0 6px 14px rgba(37, 99, 235, .32);
+  }
+  .nav svg { width: 21px; height: 21px; }
+  .nav .count {
+    position: absolute;
+    top: 2px;
+    right: 0;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 99px;
+    background: var(--btn);
+    color: var(--btn-text);
+    font-size: 11px;
+    font-weight: 800;
+    display: grid;
+    place-items: center;
+  }
+
+  .line { display: grid; grid-template-columns: 54px 1fr auto; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid #E2E8F0; }
+  .line img { width: 54px; height: 54px; border-radius: 14px; object-fit: cover; background: var(--cream); }
+  .line b { font-size: 14px; display: block; }
+  .line small { color: var(--muted); font-size: 12.5px; }
+  .step { display: flex; align-items: center; gap: 10px; background: var(--cream); border-radius: 99px; padding: 4px; }
+  .step button { width: 30px; height: 30px; border-radius: 50%; background: #fff; font-size: 18px; font-weight: 700; display: grid; place-items: center; }
+  .step button.plus { background: var(--brand); color: var(--brand-text); }
+  .step span { min-width: 16px; text-align: center; font-weight: 800; }
+  .sum { display: flex; justify-content: space-between; padding: 14px 0 4px; font-size: 14px; color: var(--muted); }
+  .sum.total { color: var(--ink); font-size: 18px; font-weight: 800; padding-bottom: 14px; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--cream); border-radius: 99px; padding: 4px; margin: 14px 0 6px; }
+  .seg button { border-radius: 99px; padding: 9px 0; font-weight: 700; font-size: 13.5px; color: var(--muted); }
+  .seg button.on { background: var(--brand); color: var(--brand-text); }
+  .seg.three { grid-template-columns: repeat(3, 1fr); gap: 8px; background: none; padding: 0; }
+  .seg.three button { background: var(--card); color: var(--ink); }
+  .seg.three button.on { background: var(--brand); color: var(--brand-text); }
+  .fld { display: block; font-size: 13px; font-weight: 600; margin-top: 10px; }
+  .fld em { color: var(--muted); font-weight: 500; font-style: normal; }
+  .fld input, .fld select {
+    width: 100%;
+    margin-top: 6px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid #CBD5E1;
+    font: inherit;
+    font-size: 14.5px;
+    background: #fff;
+  }
+  .fld input:focus { outline: 2px solid var(--brand); outline-offset: 1px; border-color: transparent; }
+  .fld.miss input { border-color: #dc2626; background: #fff5f5; }
+  .fld.miss .seg { box-shadow: inset 0 0 0 2px #dc2626; }
+  .hint { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+
+  .upsell { margin-top: 18px; }
+  .upsell-head { margin-bottom: 8px; }
+  .upsell h3 { font-size: 15.5px; font-weight: 800; display: flex; align-items: center; gap: 6px; margin: 0; }
+  .upsell-sub { font-size: 12px; color: var(--muted); margin-top: 2px; display: block; }
+  .up-row { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; padding: 4px 2px 8px; scroll-snap-type: x proximity; user-select: none; cursor: grab; }
+  .up-row::-webkit-scrollbar { display: none; }
+  .up-card {
+    flex: none;
+    width: 152px;
+    background: linear-gradient(180deg, #EAF2FF 0%, #FFFFFF 65%);
+    border-radius: 18px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    scroll-snap-align: start;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, .05);
+    border: 1px solid rgba(37, 99, 235, .08);
+  }
+  .up-media { width: 100%; height: 80px; display: grid; place-items: center; background: #DBEAFE; border-radius: 12px; overflow: hidden; }
+  .up-card img { width: 100%; height: 100%; object-fit: cover; -webkit-user-drag: none; }
+  .up-card b { font-size: 12.5px; font-weight: 700; margin: 8px 0 2px; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 31px; }
+  .up-card small { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px; }
+  .up-card .foot-row { display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
+  .up-card .price { font-size: 13.5px; font-weight: 800; }
+  .up-card .add { width: 30px; height: 30px; font-size: 16px; }
+  .up-card .acts { gap: 4px; }
+  .up-card .add, .up-card .b3d { width: 28px; height: 28px; }
+  .up-card .b3d { font-size: 10.5px; }
+  .up-card .foot-row .price { font-size: 13.5px; }
+
+  .tab-title { font-size: 26px; letter-spacing: -.4px; margin: 20px 0 4px; font-weight: 800; }
+  .tab-sub { color: var(--muted); font-size: 14px; margin-bottom: 8px; }
+  .panel { background: var(--card); border-radius: 24px; padding: 14px 16px; margin-top: 14px; box-shadow: 0 2px 10px rgba(15, 23, 42, .04); }
+  .wide { width: 100%; margin-top: 10px; }
+  .empty-cart { text-align: center; padding: 40px 10px; color: var(--muted); }
+  .empty-cart b { display: block; color: var(--ink); font-size: 17px; margin-bottom: 4px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .people { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; font-size: 13px; font-weight: 600; }
+  .map { width: 100%; height: 230px; border: 0; border-radius: 22px; margin-top: 14px; background: #E2E8F0; }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    top: 18px;
+    transform: translateX(-50%);
+    background: var(--btn);
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 14px;
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 0;
+    transition: opacity .25s;
+    z-index: 200;
+    max-width: 90%;
+    text-align: center;
+    pointer-events: none;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, .25);
+  }
+  .toast.show { opacity: 1; }
+
+  /* Fullscreen 4K 3D + Instant Zero-Scan Camera AR Modal */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, .92);
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+  .modal-backdrop.open { display: flex; }
+
+  .viewer-modal {
+    width: 100%;
+    height: 100%;
+    max-width: 540px;
+    background: #0F172A;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  @media (min-width: 600px) {
+    .modal-backdrop { padding: 16px; }
+    .viewer-modal {
+      height: min(92vh, 840px);
+      border-radius: 28px;
+      border: 1px solid rgba(255, 255, 255, .14);
+      box-shadow: 0 30px 90px rgba(0, 0, 0, .55);
+    }
+  }
+
+  .viewer-top {
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 255, 255, .1);
+    gap: 8px;
+    flex-wrap: wrap;
+    background: #0F172A;
+  }
+  .mode-switcher {
+    display: flex;
+    background: rgba(255, 255, 255, .08);
+    padding: 3px;
+    border-radius: 999px;
+    gap: 3px;
+    overflow-x: auto;
+    max-width: 100%;
+  }
+  .mode-btn {
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 0;
+    background: transparent;
+    color: rgba(255, 255, 255, .78);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .mode-btn.active {
+    background: var(--brand);
+    color: #fff;
+  }
+
+  .viewer-canvas-wrap {
+    position: relative;
+    flex: 1;
+    background: url('/models/restaurant-stage-bg.webp') center 62% / cover no-repeat, radial-gradient(circle at 50% 40%, #1E293B 0%, #0F172A 80%);
+    overflow: hidden;
+    touch-action: none;
+  }
+  #liveCameraFeed {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+    z-index: 1;
+  }
+  .viewer-canvas-wrap.camera-active #liveCameraFeed { display: block; }
+  .viewer-canvas-wrap.camera-active { background: #000; }
+
+  @keyframes dishBoomPop {
+    0% { opacity: 0; transform: translate3d(var(--tx, 0px), calc(var(--ty, 0px) - 28px), 0) scale(0.65); }
+    65% { opacity: 1; transform: translate3d(var(--tx, 0px), calc(var(--ty, 0px) + 4px), 0) scale(calc(var(--zscale, 0.86) * 1.04)); }
+    100% { opacity: 1; transform: translate3d(var(--tx, 0px), var(--ty, 0px), 0) scale(var(--zscale, 0.86)); }
+  }
+
+  #heroModelViewer {
+    position: relative;
+    z-index: 3;
+    width: 100%;
+    height: 100%;
+    --poster-color: transparent;
+    --zscale: 0.86;
+    transform: translate3d(var(--tx, 0px), var(--ty, 0px), 0) scale(var(--zscale, 0.86));
+    transform-origin: 50% 56%;
+    will-change: transform;
+    transition: opacity 0.22s ease;
+  }
+  #heroModelViewer.awaiting-placement {
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+  #heroModelViewer.boom-enter {
+    animation: dishBoomPop 0.36s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  /* Marcador 3D da posição do prato na mesa (antes de confirmar onde o prato vai ficar) */
+  .table-reticle-stage {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+    touch-action: none;
+  }
+  .table-reticle-stage.active {
+    display: flex;
+  }
+  .table-reticle-mover {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    transform: translate3d(var(--tx, 0px), var(--ty, 0px), 0) scale(var(--zscale, 0.86));
+    will-change: transform;
+    cursor: pointer;
+  }
+  .table-reticle-badge {
+    background: rgba(15, 23, 42, .88);
+    color: #fff;
+    border: 1px solid rgba(96, 165, 250, .55);
+    padding: 6px 13px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 800;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .4);
+    white-space: nowrap;
+  }
+  .table-reticle-disc {
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    border: 3.5px solid #3B82F6;
+    background: radial-gradient(circle, rgba(37, 99, 235, .28) 0%, rgba(37, 99, 235, .08) 65%, transparent 100%);
+    box-shadow: 0 0 0 6px rgba(255, 255, 255, .22), 0 18px 40px rgba(0, 0, 0, .45), inset 0 0 24px rgba(96, 165, 250, .45);
+    transform: perspective(520px) rotateX(56deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .table-reticle-disc::before {
+    content: "";
+    width: 72%;
+    height: 72%;
+    border-radius: 50%;
+    border: 2px dashed rgba(255, 255, 255, .85);
+  }
+  .table-reticle-center {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    border: 4px solid #2563EB;
+    box-shadow: 0 0 14px rgba(59, 130, 246, .95);
+  }
+  .btn-confirm-place {
+    background: var(--brand);
+    color: #fff;
+    border: 2px solid #93C5FD;
+    padding: 10px 20px;
+    border-radius: 999px;
+    font-size: 13.5px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 10px 28px rgba(37, 99, 235, .55);
+    white-space: nowrap;
+  }
+
+  .mv-loader {
+    position: absolute;
+    left: 50%;
+    top: 54px;
+    transform: translateX(-50%);
+    z-index: 6;
+    background: rgba(15, 23, 42, .88);
+    border: 1px solid rgba(255, 255, 255, .18);
+    padding: 7px 14px;
+    border-radius: 999px;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    pointer-events: none;
+  }
+  .mv-loader.visible { display: inline-flex; }
+  .mv-bar-track {
+    width: 80px;
+    height: 5px;
+    background: rgba(255, 255, 255, .2);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .mv-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: #60A5FA;
+    transition: width 0.12s linear;
+  }
+
+  .hud-bottom-stack {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+  }
+  .hud-bottom-stack > * { pointer-events: auto; }
+
+  .camera-dish-strip {
+    display: flex;
+    gap: 7px;
+    overflow-x: auto;
+    padding: 4px 2px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .camera-dish-strip::-webkit-scrollbar { display: none; }
+  .cam-dish-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 11px 5px 6px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, .86);
+    border: 1px solid rgba(255, 255, 255, .18);
+    color: #fff;
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .cam-dish-pill.active {
+    background: var(--brand);
+    color: #fff;
+    border-color: #60A5FA;
+    font-weight: 800;
+  }
+  .cam-dish-pill img {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #fff;
+  }
+
+  .hud-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .hud-btn {
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, .22);
+    background: rgba(15, 23, 42, .86);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .hud-btn.active {
+    background: var(--brand);
+    color: #fff;
+    border-color: #60A5FA;
+  }
+  .zoom-bar {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(15, 23, 42, .86);
+    border: 1px solid rgba(255, 255, 255, .22);
+    border-radius: 999px;
+    padding: 4px 10px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .zoom-bar button {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 0;
+    background: rgba(255, 255, 255, .14);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    padding: 0;
+  }
+  .zoom-bar input[type="range"] {
+    width: 88px;
+    accent-color: #3B82F6;
+    cursor: pointer;
+    margin: 0;
+  }
+
+  .viewer-bottom {
+    padding: 10px 14px;
+    background: #0F172A;
+    border-top: 1px solid rgba(255, 255, 255, .1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  /* 3D Scanner Studio Modal */
+  .scanner-modal {
+    width: 100%;
+    max-width: 520px;
+    max-height: 92vh;
+    background: var(--card);
+    color: var(--ink);
+    border-radius: 26px;
+    overflow-y: auto;
+    padding: 20px;
+    margin: 12px;
+    box-shadow: 0 30px 90px rgba(15, 23, 42, .45);
+  }
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 12px;
+  }
+  @media (max-width: 440px) { .form-grid { grid-template-columns: 1fr; } }
+  .scan-cam-box {
+    margin-top: 12px;
+    background: #000;
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    height: 220px;
+    display: none;
+  }
+  .scan-cam-box.open { display: block; }
+  .scan-cam-box video { width: 100%; height: 100%; object-fit: cover; }
+  .job-log-box {
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 12px;
+    background: #0F172A;
+    color: #93C5FD;
+    font-size: 11.5px;
+    max-height: 160px;
+    overflow-y: auto;
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <header class="top">
+    <div class="logo" id="logo">A</div>
+    <div class="who">
+      <small>Cardápio digital</small>
+      <b data-name></b>
+    </div>
+    <div class="icons">
+      <button class="icon-btn" onclick="openScannerModal()" title="Escanear Prato em 3D" aria-label="Escanear Prato 3D">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      </button>
+      <button class="icon-btn" data-toast="Restaurante favoritado!" aria-label="Favoritar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 1 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z"/></svg>
+      </button>
+      <button class="icon-btn" data-share aria-label="Compartilhar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ABA: HOME & CARDÁPIO 3D -->
+  <div data-tab="home">
+    <h1 data-name></h1>
+    <p class="lead" id="tagline"></p>
+    <span class="status" id="status"><i></i><span id="statusText">Aberto agora · Fazemos entregas</span></span>
+
+    <label class="search">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" placeholder="Buscar pratos, carnes, massas ou bebidas…" autocomplete="off">
+    </label>
+
+    <section class="feature">
+      <div class="ftxt">
+        <span class="tag" id="featTag">🔥 Destaque da casa</span>
+        <h3 id="featTitle">Veja o prato em 3D na sua mesa</h3>
+        <p id="featText">Toque no botão 3D de qualquer prato e veja-o na sua mesa, em tamanho real.</p>
+        <button class="pill brand" id="featBtn" type="button" onclick="open3D('burger-artesanal-8k')">
+          🧊 Ver em 3D na Mesa
+        </button>
+      </div>
+      <img id="featImg" src="/models/burger-artesanal-8k-poster.webp" alt="Prato em 3D" onclick="open3D('burger-artesanal-8k')">
+    </section>
+
+    <div class="ctas">
+      <button class="pill dark" data-go="reservas">Reservar mesa</button>
+      <button class="pill light" data-scroll="cardapio">Pedir delivery</button>
+    </div>
+
+    <div class="chips" id="chips"></div>
+
+    <h2>
+      Mais pedidos da semana
+      <span class="arrows">
+        <button class="arr" type="button" data-slide="-1" aria-label="Voltar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg></button>
+        <button class="arr" type="button" data-slide="1" aria-label="Ver mais"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></button>
+      </span>
+    </h2>
+    <div class="trend" id="trend"></div>
+
+    <h2 id="cardapio">Cardápio <small id="count"></small></h2>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <!-- ABA: PEDIDO / CARRINHO -->
+  <div data-tab="pedido" hidden>
+    <h1 class="tab-title">Seu pedido</h1>
+    <div class="empty-cart" id="cartEmpty">
+      <b>Seu pedido está vazio</b>
+      Explore os pratos no cardápio e toque no botão + para adicionar.
+      <button class="pill brand wide" data-go="home">Ver o cardápio</button>
+    </div>
+    <div id="cartFull" hidden>
+      <div class="panel"><div id="lines"></div></div>
+      <div class="upsell" id="upsell" hidden>
+        <div class="upsell-head">
+          <h3 id="upTitle">🥤 Vai uma bebida gelada?</h3>
+          <small class="upsell-sub" id="upSub">Bebidas bem geladas para acompanhar seu pedido</small>
+        </div>
+        <div class="up-row" id="upList"></div>
+      </div>
+      <div class="seg" id="mode">
+        <button type="button" class="on" data-mode="entrega">Entrega</button>
+        <button type="button" data-mode="retirada">Retirar / Na Mesa</button>
+      </div>
+      <div id="addrBox">
+        <label class="fld" id="addrFld">Endereço de entrega<input id="delAddr" placeholder="Rua, número e bairro" autocomplete="street-address"></label>
+        <label class="fld">Complemento ou mesa <em>(opcional)</em><input id="delRef" placeholder="Apto, bloco ou número da mesa…"></label>
+      </div>
+      <div class="fld" id="payFld">Forma de pagamento
+        <div class="seg three" id="pay">
+          <button type="button" data-pay="pix">Pix</button>
+          <button type="button" data-pay="cartao">Cartão</button>
+          <button type="button" data-pay="dinheiro">Dinheiro</button>
+        </div>
+      </div>
+      <p class="hint" id="payHint" hidden></p>
+      <label class="fld" id="trocoFld" hidden>Troco para quanto? <em>(deixe vazio se não precisar)</em><input id="troco" inputmode="decimal" placeholder="Ex.: 100"></label>
+      <div class="sum"><span id="modeLabel">Entrega</span><span id="modeFee">Grátis</span></div>
+      <div class="sum total"><span>Total</span><span id="sheetTotal"></span></div>
+      <button class="pill brand wide" data-send>Enviar pedido pelo WhatsApp</button>
+      <button class="pill light wide" data-clear>Limpar pedido</button>
+    </div>
+  </div>
+
+  <!-- ABA: RESERVAS -->
+  <div data-tab="reservas" hidden>
+    <h1 class="tab-title">Reservar mesa</h1>
+    <p class="tab-sub">Escolha o dia e o horário. A confirmação chega pelo WhatsApp.</p>
+    <section class="reserve">
+      <img src="/models/drink-blue-lagoon-poster.webp" alt="Experiência Gastronômica &amp; Drinks 3D">
+      <h3>Aniversários, encontros e experiência gastronômica</h3>
+      <p>Reserve sua mesa com antecedência.</p>
+    </section>
+    <div class="panel">
+      <div class="two">
+        <label class="fld">Dia<input type="date" id="rDate"></label>
+        <label class="fld">Horário<select id="rTime"></select></label>
+      </div>
+      <div class="people">
+        <span>Pessoas</span>
+        <div class="step">
+          <button type="button" data-people="-1" aria-label="Menos uma pessoa"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+          <span id="rPeople">2</span>
+          <button type="button" class="plus" data-people="1" aria-label="Mais uma pessoa"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+        </div>
+      </div>
+      <label class="fld" id="rNameFld">Seu nome<input id="rName" placeholder="Nome para a reserva" autocomplete="name"></label>
+      <label class="fld">Observação <em>(opcional)</em><input id="rNote" placeholder="Aniversário, cadeirinha, área externa…"></label>
+    </div>
+    <button class="pill brand wide" data-book>Confirmar reserva pelo WhatsApp</button>
+  </div>
+
+  <!-- ABA: LOCALIZAÇÃO -->
+  <div data-tab="local" hidden>
+    <h1 class="tab-title">Onde estamos</h1>
+    <iframe class="map" id="mapFrame" title="Mapa" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    <div class="info" style="margin-top:12px">
+      <a id="maps" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>
+        <span id="addr"></span>
+      </a>
+      <div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        <span>Ter a Dom · 11h30 às 23h30</span>
+      </div>
+      <div>
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 6.6 7 .7-5.3 4.8 1.6 7L12 17.6 5.7 21l1.6-7L2 9.3l7-.7z"/></svg>
+        <span id="rating">4,9 de 5 · 1.480 avaliações no Google</span>
+      </div>
+    </div>
+    <div class="two" style="margin-top:12px">
+      <a class="pill dark" id="dirLink" target="_blank" rel="noopener">Como chegar</a>
+      <button class="pill brand" style="margin:0" data-talk>Chamar no WhatsApp</button>
+    </div>
+  </div>
+</div>
+
+<!-- Barra Flutuante do Pedido -->
+<div class="cart" id="cart" data-go="pedido">
+  <div><b id="cartTotal"></b><small id="cartItems"></small></div>
+  <button class="pill brand" style="margin:0">Ver pedido</button>
+</div>
+
+<!-- Navegação Inferior Liquid Glass (Radar) com Botão 3D -->
+<nav class="nav">
+  <a href="#" class="on" data-go="home" aria-label="Início e cardápio">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
+  </a>
+  <a href="#" data-go="pedido" aria-label="Carrinho">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 7h12l1 14H5z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
+    <span class="count" id="navCount" hidden></span>
+  </a>
+  <a href="#" data-go="reservas" aria-label="Reservar mesa">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></svg>
+  </a>
+  <a href="#" data-go="local" aria-label="Localização">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>
+  </a>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<!-- MODAL: APP AR WEB INTEGRADO AO SITE (1º ESCOLHER POSIÇÃO NA MESA -> 2º PRATO FIXO NA MESA PELO SITE) -->
+<div class="modal-backdrop" id="viewerModal">
+  <div class="viewer-modal">
+    <div class="viewer-top">
+      <div style="min-width:0">
+        <div style="font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="vmTitle">Prato 3D</div>
+        <div style="font-size:11.5px;color:rgba(255,255,255,.7)" id="vmPortion">Escala Real 1:1</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div id="arLockBadge" style="font-size:11.5px;font-weight:800;padding:6px 11px;border-radius:999px;background:rgba(37,99,235,.28);border:1px solid rgba(96,165,250,.65);color:#DBEAFE;white-space:nowrap">
+          🎯 Escolha o Ponto na Mesa
+        </div>
+        <button class="pill" style="background:rgba(255,255,255,.12);color:#fff;padding:7px 13px;font-size:12.5px" onclick="closeViewerModal()">✕</button>
+      </div>
+    </div>
+
+    <div class="viewer-canvas-wrap" id="canvasWrap">
+      <video id="liveCameraFeed" autoplay playsinline muted></video>
+
+      <!-- PASSO 1: Visualizar SOMENTE a posição na mesa antes de mostrar o prato -->
+      <div class="table-reticle-stage active" id="tableReticleStage">
+        <div class="table-reticle-mover" id="tableReticleMover" onclick="confirmTablePlacement(event)">
+          <div class="table-reticle-badge" id="reticleBadgeText">📍 Aponte ou arraste para escolher a posição na mesa (Ø 26 cm)</div>
+          <div class="table-reticle-disc">
+            <div class="table-reticle-center"></div>
+          </div>
+          <button type="button" class="btn-confirm-place" onclick="confirmTablePlacement(event, true)">
+            ✓ Fixar Posição na Mesa e Ver Prato 3D
+          </button>
+        </div>
+      </div>
+
+      <div class="mv-loader" id="mvLoader">
+        <span id="mvLoaderText">Carregando 3D...</span>
+        <div class="mv-bar-track"><div class="mv-bar-fill" id="mvBarFill"></div></div>
+      </div>
+
+      <div class="hud-bottom-stack">
+        <div class="camera-dish-strip" id="cameraDishStrip"></div>
+        <div class="hud-controls">
+          <div class="zoom-bar" title="Aproximar ou desaproximar na mesa">
+            <button type="button" onclick="stepDishZoom(-0.22)" aria-label="Desaproximar">−</button>
+            <input type="range" id="zoomSlider" min="0.25" max="3.0" step="0.05" value="0.86" oninput="applyDishZoom(this.value)" aria-label="Zoom 3D">
+            <button type="button" onclick="stepDishZoom(0.22)" aria-label="Aproximar">+</button>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="hud-btn" id="btnRepositionTable" onclick="togglePlacementStep()">🎯 Mudar Posição</button>
+            <button class="hud-btn" onclick="resetCameraOrbit()">↺ Centralizar</button>
+          </div>
+        </div>
+      </div>
+
+      <model-viewer
+        id="heroModelViewer"
+        src=""
+        ios-src=""
+        poster=""
+        alt="Prato em 3D"
+        camera-controls
+        disable-pan
+        interaction-prompt="none"
+        touch-action="none"
+        interpolation-decay="45"
+        camera-orbit="28deg 68deg 120%"
+        min-camera-orbit="-Infinity 5deg 40%"
+        max-camera-orbit="Infinity 88deg 170%"
+        field-of-view="32deg"
+        min-field-of-view="6deg"
+        max-field-of-view="85deg"
+        environment-image="/vendor/env/restaurant-warm-v1.hdr"
+        tone-mapping="neutral"
+        exposure="0.95"
+        shadow-intensity="1.15"
+        shadow-softness="0.9"
+        ar
+        ar-modes="webxr quick-look"
+        ar-scale="fixed"
+        ar-placement="floor"
+        xr-environment
+      >
+        <!-- botão nativo do model-viewer escondido: o AR abre pelo botão da marca (#arCtaBtn) -->
+        <div slot="progress-bar"></div><!-- sem a barrinha padrão do model-viewer: o app tem o próprio carregador -->
+        <button slot="ar-button" hidden tabindex="-1" aria-hidden="true"></button>
+
+        <!-- Overlay da marca dentro da sessão de AR (WebXR dom-overlay). Só aparece com ar-status ativo. -->
+        <div class="ar-hud" id="arHud" data-phase="idle">
+          <div class="ar-top">
+            <div class="ar-brand ar-glass">
+              <span class="ar-logo" id="arLogo">A</span>
+              <span class="ar-brand-txt"><b id="arBrandName">Restaurante</b><small>Cardápio 3D · AR</small></span>
+            </div>
+          </div>
+          <div class="ar-toast ar-glass" id="arToast"></div>
+          <div class="ar-mid">
+            <div class="ar-coach ar-glass" id="arCoach">
+              <span class="ar-coach-ico" id="arCoachIco"></span>
+              <div><b id="arCoachTitle"></b><span id="arCoachText"></span></div>
+            </div>
+            <div class="ar-size-chip ar-glass"><i></i><span id="arSizeChipText">Tamanho real</span></div>
+          </div>
+          <div class="ar-bottom ar-glass">
+            <div class="ar-bottom-txt"><b id="arDishName">Prato</b><small id="arDishMeta"></small></div>
+            <button type="button" class="ar-add" id="arAddBtn">+ Adicionar ao pedido</button>
+          </div>
+        </div>
+        <button slot="exit-webxr-ar-button" class="ar-exit" type="button" aria-label="Sair do AR">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>Fechar
+        </button>
+      </model-viewer>
+    </div>
+
+    <!-- CTA de AR da marca: Android = WebXR no site · iPhone = AR Quick Look · outros = folha de ajuda -->
+    <div class="ar-cta">
+      <button type="button" class="ar-cta-btn" id="arCtaBtn">
+        <span class="ar-cta-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.8 20 7.2v9.6L12 21.2 4 16.8V7.2z"/><path d="M4 7.2l8 4.4 8-4.4M12 11.6v9.6"/></svg></span>
+        <span class="ar-cta-txt"><b id="arCtaTitle">Ver na minha mesa</b><small id="arCtaSub">Realidade aumentada · tamanho real</small></span>
+        <span class="ar-cta-chip" id="arCtaChip">AR</span>
+      </button>
+    </div>
+
+    <div class="viewer-bottom" style="position:relative">
+      <div style="min-width:0">
+        <div style="font-size:11.5px;color:rgba(255,255,255,.7)" id="vmBottomSub">Toque no alvo na mesa para fixar a posição e ver o prato 3D</div>
+        <div style="font-size:16px;font-weight:800;color:#fff" id="vmBottomPrice">R$ 48,90</div>
+      </div>
+      <button class="pill brand" style="margin:0;padding:11px 20px" onclick="addCurrent3DDishToCart()">
+        + Adicionar ao Pedido
+      </button>
+    </div>
+
+    <!-- Folha de ajuda quando o AR não está disponível (desktop, navegador embutido, http…) -->
+    <div class="ar-sheet" id="arSheet" hidden>
+      <div class="ar-sheet-card" role="dialog" aria-modal="true" aria-labelledby="arSheetTitle">
+        <div class="ar-sheet-ico" id="arSheetIco">📱</div>
+        <b id="arSheetTitle"></b>
+        <p id="arSheetText"></p>
+        <button type="button" class="ar-sheet-go" id="arSheetGo" hidden></button>
+        <button type="button" class="ar-sheet-alt" id="arSheetAlt" hidden></button>
+        <input class="ar-sheet-url" id="arSheetUrl" readonly aria-label="Link do cardápio">
+        <div class="ar-sheet-actions">
+          <button type="button" id="arSheetCopy">Copiar link</button>
+          <button type="button" class="sec" id="arSheetShare">Compartilhar</button>
+        </div>
+        <button type="button" class="ar-sheet-close" id="arSheetClose">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ESTÚDIO DE ESCANEAMENTO 3D & SKETCHFAB -->
+<!-- Camadas do AR: o <model-viewer> (WebXR do Android) fica escondido; a folha de ajuda aparece por cima de tudo -->
+<div id="arHost" aria-hidden="true" style="position:fixed;left:0;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none"></div>
+<script>
+  (function () {
+    var host = document.getElementById('arHost'), mv = document.getElementById('heroModelViewer'), sheet = document.getElementById('arSheet');
+    if (mv) host.appendChild(mv);
+    if (sheet) document.body.appendChild(sheet);
+  })();
+</script>
+
+<div class="modal-backdrop" id="scannerModal">
+  <div class="scanner-modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <h2 style="font-size:19px;font-weight:800;margin:0">📸 Escanear Prato ou Drink em 3D</h2>
+      <button class="pill light" style="padding:7px 14px" onclick="closeScannerModal()">✕ Fechar</button>
+    </div>
+    <p style="font-size:13px;color:var(--muted);line-height:1.45">
+      Grave um vídeo girando 360° ao redor do prato ou drink (ou envie 40–160 fotos). O pipeline <strong>COLMAP + OpenMVS CUDA</strong> isola o item e compila texturas em ultra resolução.
+    </p>
+
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <button type="button" class="pill brand" style="margin:0;padding:9px 15px;font-size:12.5px" onclick="toggleScanCameraCapture()">
+        🎥 Capturar com a Câmera
+      </button>
+      <a class="pill light" style="padding:9px 15px;font-size:12.5px" href="/api/calibration-coaster.svg" target="_blank">
+        📏 Marcador ArUco 5 cm
+      </a>
+    </div>
+
+    <div class="scan-cam-box" id="scanCamBox">
+      <video id="scanCaptureVideo" autoplay playsinline muted></video>
+      <div style="position:absolute;bottom:10px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:center">
+        <span class="mono" style="background:rgba(15,23,42,.82);color:#fff;padding:5px 10px;border-radius:99px;font-size:11px;font-weight:800" id="capturedFramesBadge">0 fotos</span>
+        <div style="display:flex;gap:6px">
+          <button type="button" class="pill brand" style="margin:0;padding:7px 12px;font-size:12px" onclick="snapFrameFromCamera()">📸 Capturar</button>
+          <button type="button" class="pill light" style="padding:7px 12px;font-size:12px" onclick="toggleAutoBurstCapture()" id="btnBurst">⏱ Auto (2/s)</button>
+        </div>
+      </div>
+    </div>
+
+    <form id="scanForm" onsubmit="submitScanJob(event)">
+      <div class="form-grid">
+        <label class="fld">Nome do Item *<input type="text" name="name" required placeholder="Ex: Drink Tropical"></label>
+        <label class="fld">Categoria *
+          <select name="category">
+            <option value="hamburgueres">Burgers 3D</option>
+            <option value="steaks">Carnes 3D</option>
+            <option value="massas">Massas 3D</option>
+            <option value="drinks">Drinks Decorativos 3D</option>
+          </select>
+        </label>
+        <label class="fld">Diâmetro na Mesa (cm) *<input type="number" step="0.5" name="dish_diameter_cm" value="24.0" required></label>
+        <label class="fld">Preço (R$)<input type="number" step="0.1" name="price_brl" value="44.90"></label>
+        <label class="fld">Motor 3D
+          <select name="engine">
+            <option value="auto">Híbrido (Local CUDA → Cloud)</option>
+            <option value="local">COLMAP + OpenMVS Local</option>
+            <option value="kiri">KIRI Engine Cloud API</option>
+          </select>
+        </label>
+        <label class="fld">Qualidade
+          <select name="profile">
+            <option value="high">High 4K (4096×4096 px)</option>
+            <option value="ultra">Ultra 4K (Full-Res)</option>
+            <option value="draft">Draft Rápido</option>
+          </select>
+        </label>
+        <label class="fld" style="grid-column:1 / -1">Vídeo (.mp4/.mov) ou Fotos (.jpg/.png)
+          <input type="file" id="scanFilesInput" name="files" multiple accept="image/*,video/*">
+        </label>
+      </div>
+      <button type="submit" class="pill brand wide">🚀 Iniciar Reconstrução 3D</button>
+    </form>
+
+    <hr style="margin:18px 0;border:0;border-top:1px solid #E2E8F0">
+
+    <h3 style="font-size:15px;font-weight:800;margin-bottom:4px">⬇ Importar Scan 3D do Sketchfab</h3>
+    <form onsubmit="submitSketchfabImport(event)" class="form-grid">
+      <label class="fld">Sketchfab Model UID *<input type="text" id="sfUid" required placeholder="Ex: e8ef88c544114de6acd20cc050f42f73"></label>
+      <label class="fld">Sketchfab API Token *<input type="password" id="sfToken" required placeholder="Token da API v3"></label>
+      <label class="fld">Nome no Cardápio *<input type="text" id="sfName" required placeholder="Ex: Coquetel"></label>
+      <label class="fld">Categoria &amp; Diâmetro (cm)
+        <div style="display:flex;gap:6px;margin-top:6px">
+          <select id="sfCategory" style="margin:0">
+            <option value="drinks">Drinks Decorativos</option>
+            <option value="hamburgueres">Burgers</option>
+            <option value="steaks">Carnes</option>
+            <option value="massas">Massas</option>
+          </select>
+          <input type="number" id="sfDiam" value="18" step="0.5" style="margin:0;width:85px">
+        </div>
+      </label>
+      <div style="grid-column:1 / -1">
+        <button type="submit" class="pill dark wide">⬇ Baixar &amp; Compilar em 3D</button>
+      </div>
+    </form>
+
+    <pre class="job-log-box mono" id="jobStatusBox"></pre>
+  </div>
+</div>
+
+<!-- Catálogo Hidratado pelo Servidor (0ms First Paint) -->
+<script>
+  window.__INITIAL_CATALOG__ = {"restaurant": {"name": "Dad's Burger & Grill · Cardápio 3D", "tagline": "Veja cada prato em 3D com resolução 4K e em tamanho real (1:1) na sua mesa antes de pedir.", "table_label": "Você está na mesa 4", "address": "Rua Sapé, 947 · Porto Alegre", "hours": "Todos os dias · 18h às 23h45"}, "items": [{"slug": "burger-artesanal-8k", "category": "hamburgueres", "name": "Dad's Signature Brioche 4K", "subtitle": "Blend 180g, cheddar inglês, bacon artesanal, alface, tomate e picles no brioche selado", "description": "Escaneamento fotogramétrico em altíssima definição (malha densa de 150 mil triângulos e textura 4096×4096) mostrando cada gergelim do pão brioche e a textura real da carne.", "price_brl": 44.9, "dish_diameter_cm": 13.5, "portion_label": "Pão Brioche · 13,5 cm", "badge": "Ultra 4K", "glb": "/models/burger-artesanal-8k.glb", "android_glb": "/models/burger-artesanal-8k-android.glb", "mobile_glb": "/models/burger-artesanal-8k-mobile.glb", "usdz": "/models/burger-artesanal-8k.usdz", "attribution": {"title": "Dad's Signature Brioche 4K", "author": "P_4_N_D_A", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/8k-burger-to-make-you-hungry-a9eb6f56e0014fd5bd36541eff411fe5"}, "sketchfab_uid": "a9eb6f56e0014fd5bd36541eff411fe5", "qa": {"slug": "burger-artesanal-8k", "texel_density_px_per_mm": 14.79, "passes_4k_gate": true, "dimensions_cm": {"width_cm": 13.32, "height_cm": 7.81, "depth_cm": 13.47, "diameter_cm": 13.5}, "web_glb": {"file_size_mb": 1.95, "triangles": 62696, "vertices": 57176, "textures": [{"width": 4096, "height": 4096, "bytes": 1610635}], "max_texture_px": 4096, "is_4k_texture": true, "extensions": ["KHR_draco_mesh_compression"], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 13.32, "height_cm": 7.81, "depth_cm": 13.47, "diameter_cm": 13.5}, "scale_method": "dish_diameter_cm", "title": "Dad's Signature Brioche 4K", "author": "P_4_N_D_A", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/8k-burger-to-make-you-hungry-a9eb6f56e0014fd5bd36541eff411fe5"}}, "android_glb": {"file_size_mb": 6.51, "triangles": 150100, "vertices": 120099, "textures": [{"width": 2048, "height": 2048, "bytes": 1177121}], "max_texture_px": 2048, "is_4k_texture": false, "extensions": [], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 13.32, "height_cm": 7.81, "depth_cm": 13.47, "diameter_cm": 13.5}, "scale_method": "dish_diameter_cm", "title": "Dad's Signature Brioche 4K", "author": "P_4_N_D_A", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/8k-burger-to-make-you-hungry-a9eb6f56e0014fd5bd36541eff411fe5"}}, "ios_usdz_mb": 3.75}, "poster": "/models/burger-artesanal-8k-poster.webp"}, {"slug": "cheeseburger-tabua-fritas", "category": "hamburgueres", "name": "Cheeseburger Duplo na Tábua com Fritas", "subtitle": "Hambúrguer bovino grelhado, queijo prato derretido, salada fresca e batatas rústicas na tábua", "description": "Combo completo servido na tábua de madeira rústica em escala real 1:1 para visualização na mesa antes do pedido.", "price_brl": 39.9, "dish_diameter_cm": 26.0, "portion_label": "Tábua · 26 cm", "badge": "Mais Pedido", "glb": "/models/cheeseburger-tabua-fritas.glb", "android_glb": "/models/cheeseburger-tabua-fritas-android.glb", "mobile_glb": "/models/cheeseburger-tabua-fritas-mobile.glb", "usdz": "/models/cheeseburger-tabua-fritas.usdz", "attribution": {"title": "Cheeseburger Duplo na Tábua com Fritas", "author": "Keith Ito", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/burger-0d339a3a91304192b4fc8d61ebd48bb1"}, "sketchfab_uid": "0d339a3a91304192b4fc8d61ebd48bb1", "qa": {"slug": "cheeseburger-tabua-fritas", "texel_density_px_per_mm": 7.61, "passes_4k_gate": true, "dimensions_cm": {"width_cm": 24.26, "height_cm": 7.05, "depth_cm": 13.92, "diameter_cm": 26.0}, "web_glb": {"file_size_mb": 1.96, "triangles": 53854, "vertices": 37419, "textures": [{"width": 4096, "height": 2048, "bytes": 1022491}, {"width": 2048, "height": 2048, "bytes": 704000}, {"width": 1024, "height": 1024, "bytes": 97444}], "max_texture_px": 4096, "is_4k_texture": true, "extensions": ["KHR_draco_mesh_compression"], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 24.26, "height_cm": 7.05, "depth_cm": 13.92, "diameter_cm": 26}, "scale_method": "dish_diameter_cm", "title": "Cheeseburger Duplo na Tábua com Fritas", "author": "Keith Ito", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/burger-0d339a3a91304192b4fc8d61ebd48bb1"}}, "android_glb": {"file_size_mb": 5.54, "triangles": 128228, "vertices": 75627, "textures": [{"width": 2048, "height": 1024, "bytes": 750726}, {"width": 2048, "height": 2048, "bytes": 936651}, {"width": 1024, "height": 1024, "bytes": 155258}], "max_texture_px": 2048, "is_4k_texture": false, "extensions": [], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 24.26, "height_cm": 7.05, "depth_cm": 13.92, "diameter_cm": 26.0}, "scale_method": "dish_diameter_cm", "title": "Cheeseburger Duplo na Tábua com Fritas", "author": "Keith Ito", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/burger-0d339a3a91304192b4fc8d61ebd48bb1"}}, "ios_usdz_mb": 3.33}, "poster": "/models/cheeseburger-tabua-fritas-poster.webp"}, {"slug": "steak-fiorentina-tbone", "category": "steaks", "name": "Bistecca alla Fiorentina (T-Bone 700g)", "subtitle": "Corte nobre T-Bone maturado a seco, selado na brasa com crosta caramelizada e flor de sal", "description": "Fotogrametria 4096×4096 da autêntica Bistecca Fiorentina com marmoreio e crosta de brasa visíveis a olho nu na câmera.", "price_brl": 119.9, "dish_diameter_cm": 25.0, "portion_label": "Corte na Tábua · 25 cm", "badge": "Corte Nobre", "glb": "/models/steak-fiorentina-tbone.glb", "android_glb": "/models/steak-fiorentina-tbone-android.glb", "mobile_glb": "/models/steak-fiorentina-tbone-mobile.glb", "usdz": "/models/steak-fiorentina-tbone.usdz", "attribution": {"title": "Bistecca alla Fiorentina (T-Bone 700g)", "author": "Shahriar Shahrabi", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/florence-steak-fiorentina-bistecca-969285ae788c41cd914387cecf088708"}, "sketchfab_uid": "969285ae788c41cd914387cecf088708", "qa": {"slug": "steak-fiorentina-tbone", "texel_density_px_per_mm": 8.78, "passes_4k_gate": true, "dimensions_cm": {"width_cm": 25.0, "height_cm": 6.73, "depth_cm": 24.93, "diameter_cm": 25.0}, "web_glb": {"file_size_mb": 2.23, "triangles": 21692, "vertices": 27404, "textures": [{"width": 4096, "height": 4096, "bytes": 2205391}], "max_texture_px": 4096, "is_4k_texture": true, "extensions": ["KHR_draco_mesh_compression"], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 25, "height_cm": 6.73, "depth_cm": 24.93, "diameter_cm": 25}, "scale_method": "dish_diameter_cm", "title": "Bistecca alla Fiorentina (T-Bone 700g)", "author": "Shahriar Shahrabi", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/florence-steak-fiorentina-bistecca-969285ae788c41cd914387cecf088708"}}, "android_glb": {"file_size_mb": 3.35, "triangles": 42630, "vertices": 47246, "textures": [{"width": 2048, "height": 2048, "bytes": 1601679}], "max_texture_px": 2048, "is_4k_texture": false, "extensions": [], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 25.0, "height_cm": 6.73, "depth_cm": 24.93, "diameter_cm": 25.0}, "scale_method": "dish_diameter_cm", "title": "Bistecca alla Fiorentina (T-Bone 700g)", "author": "Shahriar Shahrabi", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/florence-steak-fiorentina-bistecca-969285ae788c41cd914387cecf088708"}}, "ios_usdz_mb": 3.35}, "poster": "/models/steak-fiorentina-tbone-poster.webp"}, {"slug": "steak-bife-ancho-batatas", "category": "steaks", "name": "Steak Ancho Grelhado & Batatas Douradas", "subtitle": "Prime rib grelhado ao ponto com batatas salteadas na manteiga de ervas e salada fresca", "description": "Prato principal escaneado em 3D e reescalado para 27 cm exatos de diâmetro na mesa via AR.", "price_brl": 68.9, "dish_diameter_cm": 27.0, "portion_label": "Prato · 27 cm", "badge": "Chef", "glb": "/models/steak-bife-ancho-batatas.glb", "android_glb": "/models/steak-bife-ancho-batatas-android.glb", "mobile_glb": "/models/steak-bife-ancho-batatas-mobile.glb", "usdz": "/models/steak-bife-ancho-batatas.usdz", "attribution": {"title": "Steak Ancho Grelhado & Batatas Douradas", "author": "JFN", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/steak-potatoes-scaniverse-d945e7ec5ef84ad4a265f70a57ae6b81"}, "sketchfab_uid": "d945e7ec5ef84ad4a265f70a57ae6b81", "qa": {"slug": "steak-bife-ancho-batatas", "texel_density_px_per_mm": 11.31, "passes_4k_gate": true, "dimensions_cm": {"width_cm": 26.65, "height_cm": 5.16, "depth_cm": 26.65, "diameter_cm": 27.0}, "web_glb": {"file_size_mb": 0.9, "triangles": 31811, "vertices": 20911, "textures": [{"width": 4096, "height": 4096, "bytes": 822988}], "max_texture_px": 4096, "is_4k_texture": true, "extensions": ["KHR_draco_mesh_compression"], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 26.65, "height_cm": 5.16, "depth_cm": 26.65, "diameter_cm": 27}, "scale_method": "dish_diameter_cm", "title": "Steak Ancho Grelhado & Batatas Douradas", "author": "JFN", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/steak-potatoes-scaniverse-d945e7ec5ef84ad4a265f70a57ae6b81"}}, "android_glb": {"file_size_mb": 2.79, "triangles": 75743, "vertices": 43439, "textures": [{"width": 2048, "height": 2048, "bytes": 624442}], "max_texture_px": 2048, "is_4k_texture": false, "extensions": [], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 26.65, "height_cm": 5.16, "depth_cm": 26.65, "diameter_cm": 27.0}, "scale_method": "dish_diameter_cm", "title": "Steak Ancho Grelhado & Batatas Douradas", "author": "JFN", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/steak-potatoes-scaniverse-d945e7ec5ef84ad4a265f70a57ae6b81"}}, "ios_usdz_mb": 1.62}, "poster": "/models/steak-bife-ancho-batatas-poster.webp"}, {"slug": "pasta-fettuccine-ragu", "category": "massas", "name": "Pasta Artesanal ao Ragù & Ervas", "subtitle": "Massa fresca italiana envolvida em molho encorpado de tomates San Marzano, carne e manjericão", "description": "Escaneamento 3D real de prato de pasta artesanal com textura aprimorada para 4096×4096 pixels e escala 1:1.", "price_brl": 54.9, "dish_diameter_cm": 26.0, "portion_label": "Prato Fundo · 26 cm", "badge": "Artesanal 4K", "glb": "/models/pasta-fettuccine-ragu.glb", "android_glb": "/models/pasta-fettuccine-ragu-android.glb", "mobile_glb": "/models/pasta-fettuccine-ragu-mobile.glb", "usdz": "/models/pasta-fettuccine-ragu.usdz", "attribution": {"title": "Pasta Artesanal ao Ragù & Ervas", "author": "XRGourmet / Awara Pasta & Wine", "license": "CC-BY-4.0", "source": "https://github.com/code4fukui/xrgourmet"}, "sketchfab_uid": "e8ef88c544114de6acd20cc050f42f73", "qa": {"slug": "pasta-fettuccine-ragu", "texel_density_px_per_mm": 8.24, "passes_4k_gate": true, "dimensions_cm": {"width_cm": 26.0, "height_cm": 6.88, "depth_cm": 24.79, "diameter_cm": 26.0}, "web_glb": {"file_size_mb": 1.02, "triangles": 38715, "vertices": 23728, "textures": [{"width": 4096, "height": 2048, "bytes": 962093}], "max_texture_px": 4096, "is_4k_texture": true, "extensions": ["KHR_draco_mesh_compression"], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 26, "height_cm": 6.88, "depth_cm": 24.79, "diameter_cm": 26}, "scale_method": "dish_diameter_cm", "title": "Pasta Artesanal ao Ragù & Ervas", "author": "XRGourmet / Awara Pasta & Wine", "license": "CC-BY-4.0", "source": "https://github.com/code4fukui/xrgourmet"}}, "android_glb": {"file_size_mb": 2.61, "triangles": 92190, "vertices": 51273, "textures": [{"width": 2048, "height": 1024, "bytes": 600495}], "max_texture_px": 2048, "is_4k_texture": false, "extensions": [], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 26.0, "height_cm": 6.88, "depth_cm": 24.79, "diameter_cm": 26.0}, "scale_method": "dish_diameter_cm", "title": "Pasta Artesanal ao Ragù & Ervas", "author": "XRGourmet / Awara Pasta & Wine", "license": "CC-BY-4.0", "source": "https://github.com/code4fukui/xrgourmet"}}, "ios_usdz_mb": 1.89}, "poster": "/models/pasta-fettuccine-ragu-poster.webp"}, {"slug": "spaghetti-harappa-pomodoro", "category": "massas", "name": "Spaghetti al Pomodoro & Parmigiano", "subtitle": "Espaguete grano duro finalizado no molho de tomates assados, queijo curado ralado e azeite extravirgem", "description": "Modelo 3D fotogramétrico em tamanho real (prato de 25 cm) pronto para projeção AR na câmera do celular.", "price_brl": 49.9, "dish_diameter_cm": 25.0, "portion_label": "Prato · 25 cm", "badge": "Clássico Italiano", "glb": "/models/spaghetti-harappa-pomodoro.glb", "android_glb": "/models/spaghetti-harappa-pomodoro-android.glb", "mobile_glb": "/models/spaghetti-harappa-pomodoro-mobile.glb", "usdz": "/models/spaghetti-harappa-pomodoro.usdz", "attribution": {"title": "Spaghetti al Pomodoro & Parmigiano", "author": "XRGourmet / Harappa Pasta", "license": "CC-BY-4.0", "source": "https://github.com/code4fukui/xrgourmet"}, "sketchfab_uid": "b6bce6a79f6a43f2bb0ce167c27f6a7d", "qa": {"slug": "spaghetti-harappa-pomodoro", "texel_density_px_per_mm": 8.07, "passes_4k_gate": true, "dimensions_cm": {"width_cm": 25.0, "height_cm": 7.13, "depth_cm": 24.89, "diameter_cm": 25.0}, "web_glb": {"file_size_mb": 0.64, "triangles": 53053, "vertices": 32102, "textures": [{"width": 4096, "height": 2048, "bytes": 533765}], "max_texture_px": 4096, "is_4k_texture": true, "extensions": ["KHR_draco_mesh_compression"], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 25, "height_cm": 7.13, "depth_cm": 24.89, "diameter_cm": 25}, "scale_method": "dish_diameter_cm", "title": "Spaghetti al Pomodoro & Parmigiano", "author": "XRGourmet / Harappa Pasta", "license": "CC-BY-4.0", "source": "https://github.com/code4fukui/xrgourmet"}}, "android_glb": {"file_size_mb": 3.14, "triangles": 126327, "vertices": 70237, "textures": [{"width": 2048, "height": 1024, "bytes": 367751}], "max_texture_px": 2048, "is_4k_texture": false, "extensions": [], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 25.0, "height_cm": 7.13, "depth_cm": 24.89, "diameter_cm": 25.0}, "scale_method": "dish_diameter_cm", "title": "Spaghetti al Pomodoro & Parmigiano", "author": "XRGourmet / Harappa Pasta", "license": "CC-BY-4.0", "source": "https://github.com/code4fukui/xrgourmet"}}, "ios_usdz_mb": 1.7}, "poster": "/models/spaghetti-harappa-pomodoro-poster.webp"}, {"slug": "drink-blue-lagoon", "category": "drinks", "name": "Blue Lagoon Curaçao Tropical 4K", "subtitle": "Curaçao Blue, vodca premium, espuma cítrica cremosa, rodela de laranja fresca e hortelã na taça de cristal", "description": "Coquetel autoral decorativo escaneado em 3D com textura 4096×4096, rodela de laranja na borda, canudo listrado e pires de porcelana.", "price_brl": 34.9, "dish_diameter_cm": 18.0, "portion_label": "Taça Cristal · 18 cm", "badge": "Drink 3D 4K", "glb": "/models/drink-blue-lagoon.glb", "android_glb": "/models/drink-blue-lagoon-android.glb", "mobile_glb": "/models/drink-blue-lagoon-mobile.glb", "usdz": "/models/drink-blue-lagoon.usdz", "poster": "/models/drink-blue-lagoon-poster.webp"}, {"slug": "drink-sunset-spritz", "category": "drinks", "name": "Sunset Aperol Spritz Botânico 4K", "subtitle": "Aperol italiano, prosecco brut, espuma aveludada, laranja sanguínea na borda e folha aromática", "description": "Drink decorativo em taça de cristal lapidada com degradê dourado e laranja, pronto para projeção AR 1:1 na mesa.", "price_brl": 36.9, "dish_diameter_cm": 18.0, "portion_label": "Taça Cristal · 18 cm", "badge": "Drink 3D 4K", "glb": "/models/drink-sunset-spritz.glb", "android_glb": "/models/drink-sunset-spritz-android.glb", "mobile_glb": "/models/drink-sunset-spritz-mobile.glb", "usdz": "/models/drink-sunset-spritz.usdz", "poster": "/models/drink-sunset-spritz-poster.webp"}, {"slug": "drink-berry-royale", "category": "drinks", "name": "Taça Berry Royale & Morango 4K", "subtitle": "Redução de frutas vermelhas, creme mascarpone, morangos frescos colhidos no dia, filigrana dourada e hortelã", "description": "Escaneamento fotogramétrico 8K/4K real de taça decorativa em camadas de morango e creme sobre pires de porcelana.", "price_brl": 38.9, "dish_diameter_cm": 18.0, "portion_label": "Taça Royale · 18 cm", "badge": "Assinatura 4K", "glb": "/models/drink-berry-royale.glb", "android_glb": "/models/drink-berry-royale-android.glb", "mobile_glb": "/models/drink-berry-royale-mobile.glb", "usdz": "/models/drink-berry-royale.usdz", "poster": "/models/drink-berry-royale-poster.webp"}, {"slug": "drink-cafe-chantilly", "category": "drinks", "name": "Mocha Vienense Chantilly & Cacau 4K", "subtitle": "Espresso duplo com chocolate belga, coroa alta de chantilly artesanal batido na hora e medalhão de cacau", "description": "Fotogrametria 4096×4096 em porcelana vienense clássica com chantilly esculpido em alta definição.", "price_brl": 28.9, "dish_diameter_cm": 14.5, "portion_label": "Taça Vienense · 14,5 cm", "badge": "Clássico 4K", "glb": "/models/drink-cafe-chantilly.glb", "android_glb": "/models/drink-cafe-chantilly-android.glb", "mobile_glb": "/models/drink-cafe-chantilly-mobile.glb", "usdz": "/models/drink-cafe-chantilly.usdz", "poster": "/models/drink-cafe-chantilly-poster.webp"}, {"slug": "cerveja-long-neck", "category": "bebidas", "name": "Cerveja Long Neck 330 ml", "subtitle": "Gelada, direto do balde de gelo", "description": "Long neck 330 ml bem gelada, servida na garrafa.", "price_brl": 14.9, "dish_diameter_cm": 6.2, "portion_label": "Long neck · 330 ml", "badge": "Gelada", "glb": "/models/cerveja-long-neck.glb", "android_glb": "/models/cerveja-long-neck-android.glb", "mobile_glb": "/models/cerveja-long-neck-mobile.glb", "usdz": "/models/cerveja-long-neck.usdz", "poster": "/models/cerveja-long-neck-poster.webp?v=2", "attribution": {"title": "Beer Bottle", "author": "gelmi.com.br", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/none-c3de7f8b092e4092aef14d4ffc9fac7f"}, "sketchfab_uid": "c3de7f8b092e4092aef14d4ffc9fac7f", "qa": {"slug": "cerveja-long-neck", "texel_density_px_per_mm": 2.59, "passes_4k_gate": false, "dimensions_cm": {"width_cm": 6.18, "height_cm": 23.0, "depth_cm": 6.18, "diameter_cm": 6.18}, "web_glb": {"file_size_mb": 0.29, "triangles": 3165, "vertices": 1750, "textures": [{"width": 1024, "height": 1024, "bytes": 290473}], "max_texture_px": 1024, "is_4k_texture": false, "extensions": ["KHR_draco_mesh_compression"], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 6.18, "height_cm": 23, "depth_cm": 6.18, "diameter_cm": 6.18}, "scale_method": "dish_diameter_cm", "title": "Cerveja Long Neck 330 ml", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/c3de7f8b092e4092aef14d4ffc9fac7f"}}, "android_glb": {"file_size_mb": 0.4, "triangles": 6038, "vertices": 3470, "textures": [{"width": 1024, "height": 1024, "bytes": 249172}], "max_texture_px": 1024, "is_4k_texture": false, "extensions": [], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 6.18, "height_cm": 23.0, "depth_cm": 6.18, "diameter_cm": 6.18}, "scale_method": "dish_diameter_cm", "title": "Cerveja Long Neck 330 ml", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/c3de7f8b092e4092aef14d4ffc9fac7f"}}, "ios_usdz_mb": 0.41}, "codigo": "BEB-05"}, {"slug": "pizza-de-forno", "category": "pizzas", "name": "Pizza de Forno", "subtitle": "Massa fina, bordas crocantes", "description": "Pizza assada em forno de pedra, 35 cm.", "price_brl": 64.9, "dish_diameter_cm": 35.0, "portion_label": "Grande · 35 cm", "badge": "Mais pedida", "glb": "/models/pizza-de-forno.glb", "android_glb": "/models/pizza-de-forno-android.glb", "mobile_glb": "/models/pizza-de-forno-mobile.glb", "usdz": "/models/pizza-de-forno.usdz", "poster": "/models/pizza-de-forno-poster.webp?v=2", "attribution": {"title": "Pizza", "author": "Rigsters", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/none-40d50989fec1460f8838b608d999ccd0"}, "sketchfab_uid": "40d50989fec1460f8838b608d999ccd0", "qa": {"slug": "pizza-de-forno", "texel_density_px_per_mm": 1.41, "passes_4k_gate": false, "dimensions_cm": {"width_cm": 35.0, "height_cm": 5.97, "depth_cm": 35.0, "diameter_cm": 35.0}, "web_glb": {"file_size_mb": 0.99, "triangles": 27416, "vertices": 33858, "textures": [{"width": 1024, "height": 1024, "bytes": 240788}, {"width": 1024, "height": 1024, "bytes": 327110}, {"width": 1024, "height": 1024, "bytes": 189147}, {"width": 1024, "height": 1024, "bytes": 121579}], "max_texture_px": 1024, "is_4k_texture": false, "extensions": ["KHR_draco_mesh_compression"], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 35, "height_cm": 5.97, "depth_cm": 35, "diameter_cm": 35}, "scale_method": "dish_diameter_cm", "title": "Pizza de Forno", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/40d50989fec1460f8838b608d999ccd0"}}, "android_glb": {"file_size_mb": 3.01, "triangles": 55336, "vertices": 52168, "textures": [{"width": 1024, "height": 1024, "bytes": 226579}, {"width": 1024, "height": 1024, "bytes": 304382}, {"width": 1024, "height": 1024, "bytes": 174750}, {"width": 1024, "height": 1024, "bytes": 115399}], "max_texture_px": 1024, "is_4k_texture": false, "extensions": [], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 35.0, "height_cm": 5.97, "depth_cm": 35.0, "diameter_cm": 35.0}, "scale_method": "dish_diameter_cm", "title": "Pizza de Forno", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/40d50989fec1460f8838b608d999ccd0"}}, "ios_usdz_mb": 2.62}, "codigo": "PIZ-01"}, {"slug": "pizza-big-boss", "category": "pizzas", "name": "Pizza Big Boss", "subtitle": "Gigante, para dividir", "description": "Pizza gigante de 40 cm com cobertura farta.", "price_brl": 69.9, "dish_diameter_cm": 40.0, "portion_label": "Gigante · 40 cm", "badge": "Para dividir", "glb": "/models/pizza-big-boss.glb", "android_glb": "/models/pizza-big-boss-android.glb", "mobile_glb": "/models/pizza-big-boss-mobile.glb", "usdz": "/models/pizza-big-boss.usdz", "poster": "/models/pizza-big-boss-poster.webp?v=2", "attribution": {"title": "Pizza \"BigBoss\" Pancho", "author": "ponomarovmax", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/none-29832125251a44939fae1a21a3288f88"}, "sketchfab_uid": "29832125251a44939fae1a21a3288f88", "qa": {"slug": "pizza-big-boss", "texel_density_px_per_mm": 1.88, "passes_4k_gate": false, "dimensions_cm": {"width_cm": 39.94, "height_cm": 4.84, "depth_cm": 39.93, "diameter_cm": 40.0}, "web_glb": {"file_size_mb": 0.67, "triangles": 32604, "vertices": 51480, "textures": [{"width": 1024, "height": 1024, "bytes": 255397}, {"width": 1024, "height": 1024, "bytes": 219082}], "max_texture_px": 1024, "is_4k_texture": false, "extensions": ["KHR_draco_mesh_compression"], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 39.94, "height_cm": 4.84, "depth_cm": 39.93, "diameter_cm": 40}, "scale_method": "dish_diameter_cm", "title": "Pizza Big Boss", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/29832125251a44939fae1a21a3288f88"}}, "android_glb": {"file_size_mb": 3.29, "triangles": 55939, "vertices": 73003, "textures": [{"width": 1024, "height": 1024, "bytes": 238014}, {"width": 1024, "height": 1024, "bytes": 202410}], "max_texture_px": 1024, "is_4k_texture": false, "extensions": [], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 39.94, "height_cm": 4.84, "depth_cm": 39.93, "diameter_cm": 40.0}, "scale_method": "dish_diameter_cm", "title": "Pizza Big Boss", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/29832125251a44939fae1a21a3288f88"}}, "ios_usdz_mb": 2.61}, "codigo": "PIZ-04"}, {"slug": "bistecca-fiorentina-premium", "category": "steaks", "name": "Bistecca alla Fiorentina Premium", "subtitle": "Corte alto na brasa", "description": "Corte alto maturado, selado na brasa e servido ao ponto.", "price_brl": 139.9, "dish_diameter_cm": 32.0, "portion_label": "Corte · 32 cm", "badge": "Premium", "glb": "/models/bistecca-fiorentina-premium.glb", "android_glb": "/models/bistecca-fiorentina-premium-android.glb", "mobile_glb": "/models/bistecca-fiorentina-premium-mobile.glb", "usdz": "/models/bistecca-fiorentina-premium.usdz", "poster": "/models/bistecca-fiorentina-premium-poster.webp?v=2", "attribution": {"title": "Florence Steak - Fiorentina bistecca", "author": "Shahriar Shahrabi", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/none-969285ae788c41cd914387cecf088708"}, "sketchfab_uid": "969285ae788c41cd914387cecf088708", "qa": {"slug": "bistecca-fiorentina-premium", "texel_density_px_per_mm": 1.72, "passes_4k_gate": false, "dimensions_cm": {"width_cm": 31.91, "height_cm": 8.61, "depth_cm": 32.0, "diameter_cm": 32.0}, "web_glb": {"file_size_mb": 0.35, "triangles": 42418, "vertices": 36398, "textures": [{"width": 1024, "height": 1024, "bytes": 219858}], "max_texture_px": 1024, "is_4k_texture": false, "extensions": ["KHR_draco_mesh_compression"], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 31.91, "height_cm": 8.61, "depth_cm": 32, "diameter_cm": 32}, "scale_method": "dish_diameter_cm", "title": "Bistecca alla Fiorentina Premium", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/969285ae788c41cd914387cecf088708"}}, "android_glb": {"file_size_mb": 2.87, "triangles": 42630, "vertices": 120001, "textures": [{"width": 1024, "height": 1024, "bytes": 207271}], "max_texture_px": 1024, "is_4k_texture": false, "extensions": [], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 31.91, "height_cm": 8.61, "depth_cm": 32.0, "diameter_cm": 32.0}, "scale_method": "dish_diameter_cm", "title": "Bistecca alla Fiorentina Premium", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/969285ae788c41cd914387cecf088708"}}, "ios_usdz_mb": 3.78}, "codigo": "CAR-03"}, {"slug": "sashimi-prato", "category": "mar", "name": "Sashimi Variado", "subtitle": "Peixes frescos fatiados", "description": "Sashimi variado de peixes frescos.", "price_brl": 79.9, "dish_diameter_cm": 30.0, "portion_label": "Prato · 30 cm", "badge": "Fresco", "glb": "/models/sashimi-prato.glb", "android_glb": "/models/sashimi-prato-android.glb", "mobile_glb": "/models/sashimi-prato-mobile.glb", "usdz": "/models/sashimi-prato.usdz", "poster": "/models/sashimi-prato-poster.webp?v=2", "attribution": {"title": "Sashimi plate", "author": "alban", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/none-2ca42dd07637431ea6f1b7dda343df82"}, "sketchfab_uid": "2ca42dd07637431ea6f1b7dda343df82", "qa": {"slug": "sashimi-prato", "texel_density_px_per_mm": 2.26, "passes_4k_gate": false, "dimensions_cm": {"width_cm": 27.99, "height_cm": 10.78, "depth_cm": 18.45, "diameter_cm": 30.0}, "web_glb": {"file_size_mb": 0.15, "triangles": 23970, "vertices": 13134, "textures": [{"width": 1024, "height": 1024, "bytes": 83371}], "max_texture_px": 1024, "is_4k_texture": false, "extensions": ["KHR_draco_mesh_compression"], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 27.99, "height_cm": 10.78, "depth_cm": 18.45, "diameter_cm": 30}, "scale_method": "dish_diameter_cm", "title": "Sashimi Variado", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/2ca42dd07637431ea6f1b7dda343df82"}}, "android_glb": {"file_size_mb": 1.35, "triangles": 57074, "vertices": 32360, "textures": [{"width": 1024, "height": 1024, "bytes": 80902}], "max_texture_px": 1024, "is_4k_texture": false, "extensions": [], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 27.99, "height_cm": 10.78, "depth_cm": 18.45, "diameter_cm": 30.0}, "scale_method": "dish_diameter_cm", "title": "Sashimi Variado", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/2ca42dd07637431ea6f1b7dda343df82"}}, "ios_usdz_mb": 1.28}, "codigo": "MAR-11"}, {"slug": "sanduiche-caseiro", "category": "hamburgueres", "name": "Sanduíche Caseiro", "subtitle": "Receita da casa", "description": "Sanduíche caseiro com recheio generoso.", "price_brl": 26.9, "dish_diameter_cm": 18.0, "portion_label": "Sanduíche · 18 cm", "badge": "Da casa", "glb": "/models/sanduiche-caseiro.glb", "android_glb": "/models/sanduiche-caseiro-android.glb", "mobile_glb": "/models/sanduiche-caseiro-mobile.glb", "usdz": "/models/sanduiche-caseiro.usdz", "poster": "/models/sanduiche-caseiro-poster.webp", "attribution": {"title": "Home-made sandwich", "author": "alban", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/none-470c868e32f946f3bc70436c9e700af1"}, "sketchfab_uid": "470c868e32f946f3bc70436c9e700af1", "qa": {"slug": "sanduiche-caseiro", "texel_density_px_per_mm": 3.5, "passes_4k_gate": false, "dimensions_cm": {"width_cm": 16.16, "height_cm": 4.01, "depth_cm": 12.47, "diameter_cm": 18.0}, "web_glb": {"file_size_mb": 0.61, "triangles": 112111, "vertices": 109739, "textures": [{"width": 1024, "height": 1024, "bytes": 162997}], "max_texture_px": 1024, "is_4k_texture": false, "extensions": ["KHR_draco_mesh_compression"], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 16.16, "height_cm": 4.01, "depth_cm": 12.47, "diameter_cm": 18}, "scale_method": "dish_diameter_cm", "title": "Sanduíche Caseiro", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/470c868e32f946f3bc70436c9e700af1"}}, "android_glb": {"file_size_mb": 6.92, "triangles": 266946, "vertices": 194883, "textures": [{"width": 1024, "height": 1024, "bytes": 154431}], "max_texture_px": 1024, "is_4k_texture": false, "extensions": [], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 16.16, "height_cm": 4.01, "depth_cm": 12.47, "diameter_cm": 18.0}, "scale_method": "dish_diameter_cm", "title": "Sanduíche Caseiro", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/470c868e32f946f3bc70436c9e700af1"}}, "ios_usdz_mb": 3.95}, "codigo": "HAM-13"}, {"slug": "pizza-salame", "category": "pizzas", "name": "Pizza de Salame", "subtitle": "Salame italiano e muçarela", "description": "Pizza de salame italiano com muçarela e orégano.", "price_brl": 62.9, "dish_diameter_cm": 35.0, "portion_label": "Grande · 35 cm", "badge": "", "glb": "/models/pizza-salame.glb", "android_glb": "/models/pizza-salame-android.glb", "mobile_glb": "/models/pizza-salame-mobile.glb", "usdz": "/models/pizza-salame.usdz", "poster": "/models/pizza-salame-poster.webp", "attribution": {"title": "High Quality Salami Pizza V3", "author": "mrfunnysheep", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/none-744437e196614170874c79dbde5e0068"}, "sketchfab_uid": "744437e196614170874c79dbde5e0068", "qa": {"slug": "pizza-salame", "texel_density_px_per_mm": 2.45, "passes_4k_gate": false, "dimensions_cm": {"width_cm": 34.36, "height_cm": 2.88, "depth_cm": 34.9, "diameter_cm": 35.0}, "web_glb": {"file_size_mb": 0.95, "triangles": 41999, "vertices": 26969, "textures": [{"width": 1024, "height": 1024, "bytes": 219703}, {"width": 1024, "height": 1024, "bytes": 199615}, {"width": 1024, "height": 1024, "bytes": 203467}, {"width": 1024, "height": 1024, "bytes": 203467}], "max_texture_px": 1024, "is_4k_texture": false, "extensions": ["KHR_draco_mesh_compression"], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 34.36, "height_cm": 2.88, "depth_cm": 34.9, "diameter_cm": 35}, "scale_method": "dish_diameter_cm", "title": "Pizza de Salame", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/744437e196614170874c79dbde5e0068"}}, "android_glb": {"file_size_mb": 3.42, "triangles": 99999, "vertices": 56707, "textures": [{"width": 1024, "height": 1024, "bytes": 207385}, {"width": 1024, "height": 1024, "bytes": 170438}, {"width": 1024, "height": 1024, "bytes": 189804}, {"width": 1024, "height": 1024, "bytes": 189804}], "max_texture_px": 1024, "is_4k_texture": false, "extensions": [], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 34.36, "height_cm": 2.88, "depth_cm": 34.9, "diameter_cm": 35.0}, "scale_method": "dish_diameter_cm", "title": "Pizza de Salame", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/744437e196614170874c79dbde5e0068"}}, "ios_usdz_mb": 1.42}, "codigo": "PIZ-07"}, {"slug": "macarrao-molho-soja", "category": "massas", "name": "Macarrão com Molho de Soja", "subtitle": "Noodles com molho de soja fermentada", "description": "Macarrão oriental com molho encorpado de soja fermentada.", "price_brl": 38.9, "dish_diameter_cm": 22.0, "portion_label": "Tigela · 22 cm", "badge": "", "glb": "/models/macarrao-molho-soja.glb", "android_glb": "/models/macarrao-molho-soja-android.glb", "mobile_glb": "/models/macarrao-molho-soja-mobile.glb", "usdz": "/models/macarrao-molho-soja.usdz", "poster": "/models/macarrao-molho-soja-poster.webp", "attribution": {"title": "Noodles with Soybean Paste (Scaniverse LIDAR)", "author": "JFN", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/none-a1fd5cd41faf467fa9ffd42ee297e6f5"}, "sketchfab_uid": "a1fd5cd41faf467fa9ffd42ee297e6f5", "qa": {"slug": "macarrao-molho-soja", "texel_density_px_per_mm": 1.48, "passes_4k_gate": false, "dimensions_cm": {"width_cm": 21.94, "height_cm": 7.4, "depth_cm": 21.8, "diameter_cm": 22.0}, "web_glb": {"file_size_mb": 0.29, "triangles": 91506, "vertices": 58864, "textures": [{"width": 1024, "height": 256, "bytes": 53262}], "max_texture_px": 1024, "is_4k_texture": false, "extensions": ["KHR_draco_mesh_compression"], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 21.94, "height_cm": 7.4, "depth_cm": 21.8, "diameter_cm": 22}, "scale_method": "dish_diameter_cm", "title": "Macarrão com Molho de Soja", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/a1fd5cd41faf467fa9ffd42ee297e6f5"}}, "android_glb": {"file_size_mb": 4.91, "triangles": 217882, "vertices": 124204, "textures": [{"width": 1024, "height": 256, "bytes": 49715}], "max_texture_px": 1024, "is_4k_texture": false, "extensions": [], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 21.94, "height_cm": 7.4, "depth_cm": 21.8, "diameter_cm": 22.0}, "scale_method": "dish_diameter_cm", "title": "Macarrão com Molho de Soja", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/a1fd5cd41faf467fa9ffd42ee297e6f5"}}, "ios_usdz_mb": 2.24}, "codigo": "MAS-07"}, {"slug": "massa-almondegas-linguica", "category": "massas", "name": "Massa com Almôndegas e Linguiça", "subtitle": "Molho de tomate caseiro", "description": "Massa al dente com almôndegas, linguiça e molho de tomate caseiro.", "price_brl": 52.9, "dish_diameter_cm": 26.0, "portion_label": "Prato · 26 cm", "badge": "Da casa", "glb": "/models/massa-almondegas-linguica.glb", "android_glb": "/models/massa-almondegas-linguica-android.glb", "mobile_glb": "/models/massa-almondegas-linguica-mobile.glb", "usdz": "/models/massa-almondegas-linguica.usdz", "poster": "/models/massa-almondegas-linguica-poster.webp", "attribution": {"title": "Pasta with Meatballs and Sausage", "author": "Michael Bastianelli", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/none-e8ef88c544114de6acd20cc050f42f73"}, "sketchfab_uid": "e8ef88c544114de6acd20cc050f42f73", "qa": {"slug": "massa-almondegas-linguica", "texel_density_px_per_mm": 2.0, "passes_4k_gate": false, "dimensions_cm": {"width_cm": 26.0, "height_cm": 6.41, "depth_cm": 26.0, "diameter_cm": 26.0}, "web_glb": {"file_size_mb": 0.53, "triangles": 86978, "vertices": 63957, "textures": [{"width": 1024, "height": 1024, "bytes": 198915}], "max_texture_px": 1024, "is_4k_texture": false, "extensions": ["KHR_draco_mesh_compression"], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 26, "height_cm": 6.41, "depth_cm": 26, "diameter_cm": 26}, "scale_method": "dish_diameter_cm", "title": "Massa com Almôndegas e Linguiça", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/e8ef88c544114de6acd20cc050f42f73"}}, "android_glb": {"file_size_mb": 6.03, "triangles": 198211, "vertices": 120417, "textures": [{"width": 1024, "height": 1024, "bytes": 186496}], "max_texture_px": 1024, "is_4k_texture": false, "extensions": [], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 26.0, "height_cm": 6.41, "depth_cm": 26.0, "diameter_cm": 26.0}, "scale_method": "dish_diameter_cm", "title": "Massa com Almôndegas e Linguiça", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/e8ef88c544114de6acd20cc050f42f73"}}, "ios_usdz_mb": 2.38}, "codigo": "MAS-12"}, {"slug": "steak-tartare", "category": "steaks", "name": "Steak Tartare", "subtitle": "Carne crua temperada na hora", "description": "Steak tartare clássico, temperado na mesa.", "price_brl": 58.9, "dish_diameter_cm": 18.0, "portion_label": "Entrada · 18 cm", "badge": "Entrada", "glb": "/models/steak-tartare.glb", "android_glb": "/models/steak-tartare-android.glb", "mobile_glb": "/models/steak-tartare-mobile.glb", "usdz": "/models/steak-tartare.usdz", "poster": "/models/steak-tartare-poster.webp", "attribution": {"title": "Steak tartare from Bistrot Rougemont", "author": "alban", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/none-791bfef76b064b2793ede4ab225abba4"}, "sketchfab_uid": "791bfef76b064b2793ede4ab225abba4", "qa": {"slug": "steak-tartare", "texel_density_px_per_mm": 3.2, "passes_4k_gate": false, "dimensions_cm": {"width_cm": 17.85, "height_cm": 4.62, "depth_cm": 17.95, "diameter_cm": 18.0}, "web_glb": {"file_size_mb": 1.11, "triangles": 232461, "vertices": 229250, "textures": [{"width": 1024, "height": 1024, "bytes": 251272}], "max_texture_px": 1024, "is_4k_texture": false, "extensions": ["KHR_draco_mesh_compression"], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 17.85, "height_cm": 4.62, "depth_cm": 17.95, "diameter_cm": 18}, "scale_method": "dish_diameter_cm", "title": "Steak Tartare", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/791bfef76b064b2793ede4ab225abba4"}}, "android_glb": {"file_size_mb": 14.4, "triangles": 553499, "vertices": 410707, "textures": [{"width": 1024, "height": 1024, "bytes": 235502}], "max_texture_px": 1024, "is_4k_texture": false, "extensions": [], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 17.85, "height_cm": 4.62, "depth_cm": 17.95, "diameter_cm": 18.0}, "scale_method": "dish_diameter_cm", "title": "Steak Tartare", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/791bfef76b064b2793ede4ab225abba4"}}, "ios_usdz_mb": 8.19}, "codigo": "CAR-06"}, {"slug": "costeletas-de-cordeiro", "category": "steaks", "name": "Costeletas de Cordeiro", "subtitle": "Grelhadas ao alho e ervas", "description": "Costeletas de cordeiro grelhadas com alho e ervas.", "price_brl": 98.9, "dish_diameter_cm": 28.0, "portion_label": "Prato · 28 cm", "badge": "", "glb": "/models/costeletas-de-cordeiro.glb", "android_glb": "/models/costeletas-de-cordeiro-android.glb", "mobile_glb": "/models/costeletas-de-cordeiro-mobile.glb", "usdz": "/models/costeletas-de-cordeiro.usdz", "poster": "/models/costeletas-de-cordeiro-poster.webp", "attribution": {"title": "Lamb Chops", "author": "Andrei Alexandrescu", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/none-a49e21eda242453cb0a43673332cc493"}, "sketchfab_uid": "a49e21eda242453cb0a43673332cc493", "qa": {"slug": "costeletas-de-cordeiro", "texel_density_px_per_mm": 2.64, "passes_4k_gate": false, "dimensions_cm": {"width_cm": 23.7, "height_cm": 19.67, "depth_cm": 27.87, "diameter_cm": 28.0}, "web_glb": {"file_size_mb": 1.19, "triangles": 223776, "vertices": 127654, "textures": [{"width": 1024, "height": 1024, "bytes": 213081}, {"width": 1024, "height": 1024, "bytes": 232557}, {"width": 1024, "height": 1024, "bytes": 215458}], "max_texture_px": 1024, "is_4k_texture": false, "extensions": ["KHR_draco_mesh_compression"], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 23.7, "height_cm": 19.67, "depth_cm": 27.87, "diameter_cm": 28}, "scale_method": "dish_diameter_cm", "title": "Costeletas de Cordeiro", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/a49e21eda242453cb0a43673332cc493"}}, "android_glb": {"file_size_mb": 9.34, "triangles": 300000, "vertices": 278161, "textures": [{"width": 1024, "height": 1024, "bytes": 200828}, {"width": 1024, "height": 1024, "bytes": 218506}, {"width": 1024, "height": 1024, "bytes": 203324}], "max_texture_px": 1024, "is_4k_texture": false, "extensions": [], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 23.7, "height_cm": 19.67, "depth_cm": 27.87, "diameter_cm": 28.0}, "scale_method": "dish_diameter_cm", "title": "Costeletas de Cordeiro", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/a49e21eda242453cb0a43673332cc493"}}, "ios_usdz_mb": 8.19}, "codigo": "CAR-05"}, {"slug": "pato-assado", "category": "steaks", "name": "Pato Assado", "subtitle": "Pele crocante", "description": "Pato assado lentamente, pele crocante e carne macia.", "price_brl": 89.9, "dish_diameter_cm": 30.0, "portion_label": "Prato · 30 cm", "badge": "", "glb": "/models/pato-assado.glb", "android_glb": "/models/pato-assado-android.glb", "mobile_glb": "/models/pato-assado-mobile.glb", "usdz": "/models/pato-assado.usdz", "poster": "/models/pato-assado-poster.webp", "attribution": {"title": "chicken duck", "author": "georgiyhazankin", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/none-56dbb0b978fc4b5182e4176801667d49"}, "sketchfab_uid": "56dbb0b978fc4b5182e4176801667d49", "qa": {"slug": "pato-assado", "texel_density_px_per_mm": 1.96, "passes_4k_gate": false, "dimensions_cm": {"width_cm": 27.23, "height_cm": 10.05, "depth_cm": 27.87, "diameter_cm": 30.0}, "web_glb": {"file_size_mb": 0.92, "triangles": 20731, "vertices": 14773, "textures": [{"width": 1024, "height": 1024, "bytes": 205540}, {"width": 1024, "height": 1024, "bytes": 205540}, {"width": 1024, "height": 1024, "bytes": 187880}, {"width": 1024, "height": 1024, "bytes": 133506}, {"width": 1024, "height": 1024, "bytes": 133506}], "max_texture_px": 1024, "is_4k_texture": false, "extensions": ["KHR_draco_mesh_compression"], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 27.23, "height_cm": 10.05, "depth_cm": 27.87, "diameter_cm": 30}, "scale_method": "dish_diameter_cm", "title": "Pato Assado", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/56dbb0b978fc4b5182e4176801667d49"}}, "android_glb": {"file_size_mb": 1.98, "triangles": 49364, "vertices": 30878, "textures": [{"width": 1024, "height": 1024, "bytes": 194184}, {"width": 1024, "height": 1024, "bytes": 194184}, {"width": 1024, "height": 1024, "bytes": 177927}, {"width": 1024, "height": 1024, "bytes": 120531}, {"width": 1024, "height": 1024, "bytes": 120531}], "max_texture_px": 1024, "is_4k_texture": false, "extensions": [], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 27.23, "height_cm": 10.05, "depth_cm": 27.87, "diameter_cm": 30.0}, "scale_method": "dish_diameter_cm", "title": "Pato Assado", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/56dbb0b978fc4b5182e4176801667d49"}}, "ios_usdz_mb": 1.57}, "codigo": "CAR-07"}, {"slug": "bife-com-arroz", "category": "steaks", "name": "Bife com Arroz", "subtitle": "Prato do dia", "description": "Bife grelhado com arroz soltinho.", "price_brl": 46.9, "dish_diameter_cm": 26.0, "portion_label": "Prato · 26 cm", "badge": "Prato do dia", "glb": "/models/bife-com-arroz.glb", "android_glb": "/models/bife-com-arroz-android.glb", "mobile_glb": "/models/bife-com-arroz-mobile.glb", "usdz": "/models/bife-com-arroz.usdz", "poster": "/models/bife-com-arroz-poster.webp", "attribution": {"title": "Steak and Rice (Scaniverse)", "author": "JFN", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/none-95c7fef786494b77bfa6cb3d9f66858e"}, "sketchfab_uid": "95c7fef786494b77bfa6cb3d9f66858e", "qa": {"slug": "bife-com-arroz", "texel_density_px_per_mm": 2.8, "passes_4k_gate": false, "dimensions_cm": {"width_cm": 25.76, "height_cm": 6.55, "depth_cm": 25.96, "diameter_cm": 26.0}, "web_glb": {"file_size_mb": 0.37, "triangles": 100776, "vertices": 63316, "textures": [{"width": 1024, "height": 1024, "bytes": 118370}], "max_texture_px": 1024, "is_4k_texture": false, "extensions": ["KHR_draco_mesh_compression"], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 25.76, "height_cm": 6.55, "depth_cm": 25.96, "diameter_cm": 26}, "scale_method": "dish_diameter_cm", "title": "Bife com Arroz", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/95c7fef786494b77bfa6cb3d9f66858e"}}, "android_glb": {"file_size_mb": 5.43, "triangles": 239951, "vertices": 135090, "textures": [{"width": 1024, "height": 1024, "bytes": 111199}], "max_texture_px": 1024, "is_4k_texture": false, "extensions": [], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 25.76, "height_cm": 6.55, "depth_cm": 25.96, "diameter_cm": 26.0}, "scale_method": "dish_diameter_cm", "title": "Bife com Arroz", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/95c7fef786494b77bfa6cb3d9f66858e"}}, "ios_usdz_mb": 2.49}, "codigo": "CAR-14"}, {"slug": "souvlaki-grego", "category": "acompanhamentos", "name": "Souvlaki Grego", "subtitle": "Espetos, pita e tzatziki", "description": "Prato grego com espetos de carne, pão pita e molho tzatziki.", "price_brl": 64.9, "dish_diameter_cm": 32.0, "portion_label": "Prato · 32 cm", "badge": "", "glb": "/models/souvlaki-grego.glb", "android_glb": "/models/souvlaki-grego-android.glb", "mobile_glb": "/models/souvlaki-grego-mobile.glb", "usdz": "/models/souvlaki-grego.usdz", "poster": "/models/souvlaki-grego-poster.webp", "attribution": {"title": "Souvlaki Greek Platter", "author": "Rainbow", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/none-da9954daa6524a9d92e88f68e95d0443"}, "sketchfab_uid": "da9954daa6524a9d92e88f68e95d0443", "qa": {"slug": "souvlaki-grego", "texel_density_px_per_mm": 2.14, "passes_4k_gate": false, "dimensions_cm": {"width_cm": 24.01, "height_cm": 5.65, "depth_cm": 31.37, "diameter_cm": 32.0}, "web_glb": {"file_size_mb": 0.31, "triangles": 11388, "vertices": 33840, "textures": [{"width": 1024, "height": 1024, "bytes": 211905}], "max_texture_px": 1024, "is_4k_texture": false, "extensions": ["KHR_draco_mesh_compression"], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 24.01, "height_cm": 5.65, "depth_cm": 31.37, "diameter_cm": 32}, "scale_method": "dish_diameter_cm", "title": "Souvlaki Grego", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/da9954daa6524a9d92e88f68e95d0443"}}, "android_glb": {"file_size_mb": 1.35, "triangles": 11492, "vertices": 33944, "textures": [{"width": 1024, "height": 1024, "bytes": 186285}], "max_texture_px": 1024, "is_4k_texture": false, "extensions": [], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 24.01, "height_cm": 5.65, "depth_cm": 31.37, "diameter_cm": 32.0}, "scale_method": "dish_diameter_cm", "title": "Souvlaki Grego", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/da9954daa6524a9d92e88f68e95d0443"}}, "ios_usdz_mb": 1.31}, "codigo": "ACO-07"}, {"slug": "tabua-frutas-carnes-paes", "category": "acompanhamentos", "name": "Tábua de Frios, Frutas e Pães", "subtitle": "Para compartilhar", "description": "Tábua com frios, frutas frescas e pães.", "price_brl": 89.9, "dish_diameter_cm": 40.0, "portion_label": "Tábua · 40 cm", "badge": "Para dividir", "glb": "/models/tabua-frutas-carnes-paes.glb", "android_glb": "/models/tabua-frutas-carnes-paes-android.glb", "mobile_glb": "/models/tabua-frutas-carnes-paes-mobile.glb", "usdz": "/models/tabua-frutas-carnes-paes.usdz", "poster": "/models/tabua-frutas-carnes-paes-poster.webp", "attribution": {"title": "fruits, meat, bread", "author": "alixor22", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/none-f77fcc30fee34edf844cf50b7fc4691f"}, "sketchfab_uid": "f77fcc30fee34edf844cf50b7fc4691f", "qa": {"slug": "tabua-frutas-carnes-paes", "texel_density_px_per_mm": 1.48, "passes_4k_gate": false, "dimensions_cm": {"width_cm": 37.83, "height_cm": 10.42, "depth_cm": 33.34, "diameter_cm": 40.0}, "web_glb": {"file_size_mb": 1.72, "triangles": 43412, "vertices": 24698, "textures": [{"width": 1024, "height": 1024, "bytes": 187875}, {"width": 1024, "height": 1024, "bytes": 435409}, {"width": 1024, "height": 1024, "bytes": 196528}, {"width": 1024, "height": 1024, "bytes": 170404}, {"width": 1024, "height": 1024, "bytes": 327806}, {"width": 1024, "height": 1024, "bytes": 48995}, {"width": 1024, "height": 1024, "bytes": 90797}, {"width": 1024, "height": 1024, "bytes": 142234}, {"width": 1024, "height": 1024, "bytes": 26019}], "max_texture_px": 1024, "is_4k_texture": false, "extensions": ["KHR_draco_mesh_compression"], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 37.83, "height_cm": 10.42, "depth_cm": 33.34, "diameter_cm": 40}, "scale_method": "dish_diameter_cm", "title": "Tábua de Frios, Frutas e Pães", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/f77fcc30fee34edf844cf50b7fc4691f"}}, "android_glb": {"file_size_mb": 4.31, "triangles": 103373, "vertices": 56076, "textures": [{"width": 1024, "height": 1024, "bytes": 178056}, {"width": 1024, "height": 1024, "bytes": 386072}, {"width": 1024, "height": 1024, "bytes": 184226}, {"width": 1024, "height": 1024, "bytes": 160758}, {"width": 1024, "height": 1024, "bytes": 284693}, {"width": 1024, "height": 1024, "bytes": 46836}, {"width": 1024, "height": 1024, "bytes": 87567}, {"width": 1024, "height": 1024, "bytes": 121282}, {"width": 1024, "height": 1024, "bytes": 24602}], "max_texture_px": 1024, "is_4k_texture": false, "extensions": [], "extras": {"generator": "Cardapio3D Ultra Pipeline v1.0", "dimensions_cm": {"width_cm": 37.83, "height_cm": 10.42, "depth_cm": 33.34, "diameter_cm": 40.0}, "scale_method": "dish_diameter_cm", "title": "Tábua de Frios, Frutas e Pães", "license": "CC-BY-4.0", "source": "https://sketchfab.com/3d-models/f77fcc30fee34edf844cf50b7fc4691f"}}, "ios_usdz_mb": 2.33}, "codigo": "CAF-10"}]};
+</script>
+
+<script>
+  const P = new URLSearchParams(location.search);
+  let CATALOG = window.__INITIAL_CATALOG__ || { items: [] };
+  let CURRENT_ITEM = null;
+  let VIEWER_MODE = 'camera';
+  let PLACEMENT_CONFIRMED = false;
+  let LIVE_CAMERA_STREAM = null;
+  let SCAN_CAMERA_STREAM = null;
+  let CAPTURED_BLOBS = [];
+  let AUTO_BURST_TIMER = null;
+  let ZOOM_LEVEL = 0.86;
+  let MOVE_ON_TABLE_ON = false;
+  let TABLE_OFFSET = { x: 0, y: 0 };
+  let MV_ENGINE_LOADED = false;
+  const PREFETCHED_GLBS = new Set();
+
+  const PLUS = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+  const MINUS = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"/></svg>';
+  const $ = (s) => document.querySelector(s);
+  const el = (tag, attrs = {}, ...kids) => { const e = document.createElement(tag); Object.assign(e, attrs); e.append(...kids); return e; };
+  const brl = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const toast = (t) => { const x = $('#toast'); x.textContent = t; x.classList.add('show'); clearTimeout(x._t); x._t = setTimeout(() => x.classList.remove('show'), 2400); };
+
+  // Celular com pouca memória ou economia de dados recebe a versão 2K (4x menos memória de GPU); os demais, 4K.
+  // Teste: ?q=low | ?q=high
+  const LOW_END = (() => {
+    if (P.get('q') === 'low') return true;
+    if (P.get('q') === 'high') return false;
+    const c = navigator.connection || {};
+    return (navigator.deviceMemory > 0 && navigator.deviceMemory <= 4) || c.saveData === true || /^(slow-2g|2g|3g)$/.test(c.effectiveType || '');
+  })();
+  const pickGlb = (it) => (LOW_END && it.mobile_glb) ? it.mobile_glb : it.glb;
+
+  let MENU = [];
+  const st = {
+    nome: P.get('nome') || 'Azure Gastrobar',
+    cor: /^[0-9a-f]{6}$/i.test(P.get('cor') || '') ? '#' + P.get('cor') : '#2563EB',
+    cor2: /^[0-9a-f]{6}$/i.test(P.get('cor2') || '') ? '#' + P.get('cor2') : '#0F172A',
+    whats: (P.get('whats') || '5551999999999').replace(/\D/g, ''),
+    end: P.get('end') || 'Av. Atlântica, 1420 · Centro',
+    // só caminhos do próprio servidor (nunca um endereço de fora)
+    logo: /^\/[A-Za-z0-9._\/-]{1,120}$/.test(P.get('logo') || '') ? P.get('logo') : '',
+    itens: (P.get('itens') || '').split(',').map(x => x.trim()).filter(x => /^[a-z0-9-]{2,60}$/.test(x)),
+    tagline: (P.get('frase') || '').slice(0, 160) || 'Gastronomia autoral e drinks especiais. Toque em 3D em qualquer prato para vê-lo na sua mesa, em tamanho real.'
+  };
+
+  function mapCategoryLabel(catCode) {
+    const map = {
+      hamburgueres: 'Burgers',
+      steaks: 'Carnes',
+      massas: 'Massas',
+      pizzas: 'Pizzas',
+      mar: 'Frutos do mar',
+      acompanhamentos: 'Acompanhamentos',
+      bebidas: 'Bebidas',
+      drinks: 'Drinks Decorativos'
+    };
+    return map[catCode] || 'Pratos';
+  }
+
+  function rebuildUnifiedMenu() {
+    const only = st.itens.length ? (CATALOG.items || []).filter(it => st.itens.includes(it.slug)) : (CATALOG.items || [])
+    MENU = only.map(it => ({
+      cat: mapCategoryLabel(it.category),
+      name: it.name.replace(/\s*4K|\s*8K/gi, '').trim(),
+      desc: it.subtitle,
+      price: Number(it.price_brl || 49.9),
+      img: it.poster || `/models/${it.slug}-poster.webp`,
+      slug3d: it.slug,
+      glb: pickGlb(it),
+      usdz: it.usdz,
+      raw3d: it
+    }));
+  }
+
+  function applyRestaurantBranding() {
+    const css = document.documentElement.style;
+    css.setProperty('--brand', st.cor);
+    css.setProperty('--btn', st.cor2);
+    document.title = `${st.nome} · Cardápio digital`;
+    if (st.itens.length) { const q = $('#q'); if (q) q.placeholder = 'Buscar no cardápio'; }
+    const logoEl = $('#logo');
+    if (st.logo) { logoEl.textContent = ''; const im = document.createElement('img'); im.src = st.logo; im.alt = ''; logoEl.appendChild(im); }
+    else logoEl.textContent = (st.nome.trim()[0] || 'A').toUpperCase();
+    document.querySelectorAll('[data-name]').forEach(n => { n.textContent = st.nome; });
+    $('#tagline').textContent = st.tagline;
+    $('#addr').textContent = st.end;
+    const place = encodeURIComponent(`${st.nome} ${st.end}`);
+    $('#maps').href = `https://www.google.com/maps/search/?api=1&query=${place}`;
+    $('#dirLink').href = `https://www.google.com/maps/dir/?api=1&destination=${place}`;
+    $('#mapFrame').dataset.src = `https://maps.google.com/maps?q=${place}&z=15&output=embed`;
+  }
+
+  // Carrinho e WhatsApp (Template Radar)
+  const cart = new Map();
+  const qtyOf = (i) => cart.get(i) || 0;
+  function change(i, d) {
+    const q = Math.max(0, qtyOf(i) + d);
+    if (q) cart.set(i, q); else cart.delete(i);
+    paintCart();
+    paintMenu();
+    paintTrend();
+  }
+
+  // Cada prato tem o botão + (adiciona ao pedido) e, à esquerda dele, o botão 3D (abre direto o AR do aparelho, sem página intermediária).
+  function addBtn(i) {
+    return el('button', {
+      className: 'add',
+      innerHTML: PLUS,
+      title: 'Adicionar ao pedido',
+      ariaLabel: 'Adicionar ao pedido',
+      onclick: (ev) => {
+        ev.stopPropagation();
+        change(i, 1);
+        toast(`${MENU[i].name} adicionado ao pedido!`);
+      }
+    });
+  }
+  function btn3D(i) {
+    const m = MENU[i];
+    if (!m || !m.slug3d) return null; // prato sem modelo 3D: sem botão
+    return el('button', {
+      className: 'b3d',
+      type: 'button',
+      textContent: '3D',
+      title: 'Ver este prato em 3D na sua mesa (AR)',
+      ariaLabel: `Ver ${m.name} em 3D na sua mesa`,
+      onclick: (ev) => { ev.stopPropagation(); open3D(m.slug3d); }
+    });
+  }
+  function acts(i) {
+    const b3 = btn3D(i);
+    return el('div', { className: 'acts' }, ...(b3 ? [b3] : []), addBtn(i));
+  }
+
+  // Botão 3D: abre o AR do aparelho NA HORA do toque (iPhone: AR Quick Look · Android: WebXR/ARCore ou Scene Viewer · computador: orienta a abrir no celular).
+  function open3D(slug) {
+    const item = (CATALOG.items || []).find((x) => x.slug === slug);
+    if (!item) { toast('Este prato ainda não tem modelo 3D'); return; }
+    CURRENT_ITEM = item;
+    if (!window.Cardapio3DAR) { toast('O AR ainda está carregando, tente de novo'); return; }
+    return window.Cardapio3DAR.open(item);
+  }
+  window.open3D = open3D;
+
+  function wa(text) {
+    if (!st.whats) return toast('Pedido pronto para envio no WhatsApp!');
+    window.open(`https://wa.me/${st.whats}?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+  }
+
+  let tab = 'home';
+  function go(name) {
+    tab = name;
+    const targetSection = name;
+    document.querySelectorAll('[data-tab]').forEach(x => { x.hidden = x.dataset.tab !== targetSection; });
+    document.querySelectorAll('.nav a').forEach(a => a.classList.toggle('on', a.dataset.go === name));
+    if (name === 'local' && !$('#mapFrame').src) $('#mapFrame').src = $('#mapFrame').dataset.src;
+    paintCart();
+    paintMenu();
+    paintTrend();
+    window.scrollTo(0, 0);
+  }
+
+  function paintCart() {
+    const items = [...cart.entries()];
+    const total = items.reduce((s, [i, q]) => s + MENU[i].price * q, 0);
+    const qty = items.reduce((s, [, q]) => s + q, 0);
+    $('#cart').classList.toggle('show', qty > 0 && tab === 'home');
+    $('#navCount').hidden = !qty;
+    $('#navCount').textContent = qty;
+    $('#cartEmpty').hidden = qty > 0;
+    $('#cartFull').hidden = !qty;
+    $('#cartTotal').textContent = brl(total);
+    $('#cartItems').textContent = `${qty} ${qty === 1 ? 'item' : 'itens'} no pedido`;
+    $('#sheetTotal').textContent = brl(total);
+    paintUpsell();
+    $('#lines').replaceChildren(...items.map(([i, q]) => el('div', { className: 'line' },
+      el('img', { src: MENU[i].img, alt: '' }),
+      el('div', {},
+        el('b', { textContent: MENU[i].name }),
+        el('small', { textContent: `${q} × ${brl(MENU[i].price)} = ${brl(MENU[i].price * q)}` })
+      ),
+      el('div', { className: 'step' },
+        el('button', { innerHTML: MINUS, ariaLabel: 'Tirar um', onclick: () => change(i, -1) }),
+        el('span', { textContent: q }),
+        el('button', { className: 'plus', innerHTML: PLUS, ariaLabel: 'Mais um', onclick: () => change(i, 1) })
+      )
+    )));
+  }
+
+  function paintUpsell() {
+    const isDrink = (c) => c === 'Drinks Decorativos' || c === 'Bebidas';
+    const hasDrink = [...cart.keys()].some(i => MENU[i] && isDrink(MENU[i].cat));
+    let list = MENU.map((_, i) => i).filter(i => !cart.has(i) && (hasDrink ? !isDrink(MENU[i].cat) : isDrink(MENU[i].cat)));
+    list = list.slice(0, 6);
+    $('#upsell').hidden = !list.length;
+    $('#upTitle').textContent = hasDrink ? '🍽️ Complete seu pedido' : '🍹 Vai um Drink Decorativo?';
+    $('#upSub').textContent = hasDrink ? 'Toque em 3D para ver o prato na sua mesa' : 'Toque em 3D para ver o drink na sua mesa';
+    $('#upList').replaceChildren(...list.map(i => el('div', { className: 'up-card' },
+      el('div', {
+        className: 'up-media',
+        style: 'cursor:pointer;background:url(/models/restaurant-stage-bg.webp) center/cover',
+        onclick: () => open3D(MENU[i].slug3d)
+      }, el('img', { src: MENU[i].img, alt: MENU[i].name, loading: 'lazy' })),
+      el('b', { textContent: MENU[i].name }),
+      el('small', { textContent: MENU[i].desc }),
+      el('div', { className: 'foot-row' },
+        el('span', { className: 'price', textContent: brl(MENU[i].price) }),
+        acts(i)
+      )
+    )));
+  }
+
+  let activeCat = 'Todos';
+  function paintTrend() {
+    const trendIndices = MENU.map((m, i) => [m, i]).filter(([m]) => m.slug3d).map(([, i]) => i);
+    $('#trend').replaceChildren(...trendIndices.map(i => {
+      const m = MENU[i];
+      const card = el('div', {
+        className: 'tcard',
+        onmouseenter: () => prefetchGlb(pickGlb(m)),
+        ontouchstart: () => prefetchGlb(pickGlb(m))
+      },
+        el('div', { className: 'row' },
+          el('b', { textContent: m.name }),
+          acts(i)
+        ),
+        el('div', { className: 'meta' },
+          el('span', { className: 'star', textContent: '★' }),
+          `4,9 · ${m.cat}`
+        ),
+        el('div', {
+          className: 'tcard-img-wrap',
+          style: 'background:url(/models/restaurant-stage-bg.webp) center/cover'
+        },
+          el('img', { src: m.img, alt: m.name, loading: 'eager', decoding: 'async' })
+        )
+      );
+      return card;
+    }));
+  }
+
+  function paintMenu() {
+    const q = ($('#q').value || '').trim().toLowerCase();
+    const list = MENU.map((m, i) => [m, i]).filter(([m]) => {
+      const catMatch = activeCat === 'Todos' || m.cat === activeCat;
+      const qMatch = !q || `${m.name} ${m.desc} ${m.cat}`.toLowerCase().includes(q);
+      return catMatch && qMatch;
+    });
+    $('#count').textContent = `${list.length} ${list.length === 1 ? 'item' : 'itens'}`;
+
+    $('#grid').replaceChildren(...list.map(([m, i]) => {
+      const mediaDiv = el('div', {
+        className: 'item-media is-3d',
+        style: 'background:url(/models/restaurant-stage-bg.webp) center/cover'
+      },
+        el('img', { src: m.img, alt: m.name, loading: i < 6 ? 'eager' : 'lazy', decoding: 'async' })
+      );
+
+      return el('div', {
+        className: 'item',
+        onmouseenter: () => prefetchGlb(pickGlb(m)),
+        ontouchstart: () => prefetchGlb(pickGlb(m))
+      },
+        mediaDiv,
+        el('b', { textContent: m.name }),
+        el('p', { textContent: m.desc }),
+        el('div', { className: 'row' },
+          el('span', { className: 'price', textContent: brl(m.price) }),
+          acts(i)
+        ),
+        ...(qtyOf(i) ? [el('span', { className: 'qty', textContent: qtyOf(i) })] : [])
+      );
+    }));
+
+    if (!list.length) { // nunca deixa a lista em branco sem explicar (busca restaurada pelo navegador, categoria antiga, catálogo que não carregou)
+      const noMenu = !MENU.length;
+      $('#grid').replaceChildren(el('div', { className: 'empty-cart', style: 'grid-column:1/-1' },
+        el('b', { textContent: noMenu ? 'Não foi possível carregar o cardápio' : 'Nenhum prato encontrado' }),
+        el('span', { textContent: noMenu ? 'Verifique a conexão e tente de novo.' : 'Tire os filtros para ver todos os pratos.' }),
+        el('button', {
+          className: 'pill brand', style: 'margin-top:12px', textContent: noMenu ? 'Tentar de novo' : 'Limpar filtros',
+          onclick: () => { if (noMenu) { initApp(true); return; } $('#q').value = ''; activeCat = 'Todos'; paintMenu(); }
+        })));
+    }
+
+    const cats = ['Todos', ...new Set(MENU.map(m => m.cat))];
+    $('#chips').replaceChildren(...cats.map(c => {
+      const sample = MENU.find(m => m.cat === c) || MENU[0];
+      return el('button', {
+        className: `chip${c === activeCat ? ' on' : ''}`,
+        onclick: () => { activeCat = c; paintMenu(); }
+      },
+        el('img', { src: sample ? sample.img : '', alt: '' }),
+        c.trim()
+      );
+    }));
+  }
+
+  function addCurrent3DDishToCart() {
+    if (!CURRENT_ITEM) return;
+    const idx = MENU.findIndex(m => m.slug3d === CURRENT_ITEM.slug);
+    if (idx >= 0) {
+      change(idx, 1);
+      toast(`${MENU[idx].name} adicionado ao pedido!`);
+    }
+  }
+
+  // Motor 3D + Posicionamento na Mesa em 2 Etapas + App AR Fixo Nativo
+  function boostMaxAnisotropy(mvEl) {
+    try {
+      const getSym = (desc) => {
+        for (let o = mvEl; o; o = Object.getPrototypeOf(o)) {
+          const s = Object.getOwnPropertySymbols(o).find(sym => sym.description === desc);
+          if (s) return mvEl[s];
+        }
+      };
+      const scene = getSym('scene');
+      const renderer = getSym('renderer');
+      const maxAniso = renderer?.threeRenderer?.capabilities?.getMaxAnisotropy?.() ?? 1;
+      if (scene?.traverse && maxAniso > 1) {
+        const maps = ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap', 'emissiveMap'];
+        scene.traverse(node => {
+          const mats = Array.isArray(node.material) ? node.material : node.material ? [node.material] : [];
+          for (const m of mats) {
+            for (const k of maps) {
+              if (m[k] && m[k].anisotropy !== maxAniso) {
+                m[k].anisotropy = maxAniso;
+                m[k].needsUpdate = true;
+              }
+            }
+          }
+        });
+      }
+    } catch (e) {}
+  }
+
+  // ============================================================================
+  // MOTOR AR WEB 100% NO SITE (RASTREAMENTO ÓPTICO DE MESA + ESCALA + GIROSCÓPIO)
+  // ============================================================================
+  let AR_TRACKER_RAF = null;
+  let AR_TRACK_CANVAS = null;
+  let AR_TRACK_CTX = null;
+  let AR_PREV_GRAY = null;
+  const AR_W = 96;
+  const AR_H = 96;
+
+  let GYRO_ACTIVE = false;
+  let GYRO_BASE = null;
+  let GYRO_LAST = null;
+  let AR_THETA_RAD = 0;
+  let AR_PHI_RAD = (62 * Math.PI) / 180;
+  let USER_TOUCHING_VIEWER = false;
+
+  function syncPlacementTransform() {
+    const mv = $('#heroModelViewer');
+    const mover = $('#tableReticleMover');
+    const tx = TABLE_OFFSET.x.toFixed(1) + 'px';
+    const ty = TABLE_OFFSET.y.toFixed(1) + 'px';
+    if (mv) {
+      mv.style.setProperty('--tx', tx);
+      mv.style.setProperty('--ty', ty);
+    }
+    if (mover) {
+      mover.style.setProperty('--tx', tx);
+      mover.style.setProperty('--ty', ty);
+    }
+  }
+
+  function updateArLockBadge(locked) {
+    const b = $('#arLockBadge');
+    if (!b) return;
+    if (locked) {
+      b.textContent = '🔒 Fixo na Mesa · AR Web';
+      b.style.background = 'rgba(16,185,129,.26)';
+      b.style.borderColor = 'rgba(52,211,153,.75)';
+      b.style.color = '#D1FAE5';
+    } else {
+      b.textContent = '🎯 Escolha o Ponto na Mesa';
+      b.style.background = 'rgba(37,99,235,.28)';
+      b.style.borderColor = 'rgba(96,165,250,.65)';
+      b.style.color = '#DBEAFE';
+    }
+  }
+
+  function enterPlacementMode() {
+    PLACEMENT_CONFIRMED = false;
+    stopWebARTracker();
+    updateArLockBadge(false);
+    const mv = $('#heroModelViewer');
+    const stage = $('#tableReticleStage');
+    const repBtn = $('#btnRepositionTable');
+    if (mv) mv.classList.add('awaiting-placement');
+    if (stage) stage.classList.add('active');
+    if (repBtn) {
+      repBtn.classList.add('active');
+      repBtn.textContent = '✓ Fixar Posição';
+    }
+    const diam = (CURRENT_ITEM && CURRENT_ITEM.dish_diameter_cm) || 26;
+    const badge = $('#reticleBadgeText');
+    if (badge) badge.textContent = `📍 Aponte ou arraste para escolher a posição na mesa (Ø ${diam} cm)`;
+    $('#vmBottomSub').textContent = 'Toque no alvo na mesa para fixar a posição e ver o prato 3D';
+  }
+
+  let DID_DRAG_RETICLE = false;
+
+  function confirmTablePlacement(ev, fromButton = false) {
+    if (ev) ev.stopPropagation();
+    if (!fromButton && DID_DRAG_RETICLE) {
+      DID_DRAG_RETICLE = false;
+      return;
+    }
+    requestGyroPermissionIfNeeded();
+    PLACEMENT_CONFIRMED = true;
+    updateArLockBadge(true);
+    const mv = $('#heroModelViewer');
+    const stage = $('#tableReticleStage');
+    const repBtn = $('#btnRepositionTable');
+    if (stage) stage.classList.remove('active');
+    if (mv) {
+      mv.classList.remove('awaiting-placement');
+      triggerBoomAnimation(mv);
+    }
+    if (repBtn) {
+      repBtn.classList.remove('active');
+      repBtn.textContent = '🎯 Mudar Posição';
+    }
+    $('#vmBottomSub').textContent = 'Mova o celular (ou use os dedos) para rodear 360°, aproximar e se desaproximar';
+    startWebARTracker();
+  }
+
+  function togglePlacementStep() {
+    if (PLACEMENT_CONFIRMED) {
+      enterPlacementMode();
+    } else {
+      confirmTablePlacement(null, true);
+    }
+  }
+
+  function requestGyroPermissionIfNeeded() {
+    try {
+      if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission().then(state => {
+          if (state === 'granted') bindGyroListener();
+        }).catch(() => {});
+      } else {
+        bindGyroListener();
+      }
+    } catch (e) {}
+  }
+
+  function bindGyroListener() {
+    if (GYRO_ACTIVE) return;
+    GYRO_ACTIVE = true;
+    window.addEventListener('deviceorientation', onDeviceOrientationAR, { passive: true });
+  }
+
+  function angleDiffDeg(a, b) {
+    let d = ((a - b + 540) % 360) - 180;
+    return d;
+  }
+
+  function onDeviceOrientationAR(e) {
+    if (!PLACEMENT_CONFIRMED || USER_TOUCHING_VIEWER) return;
+    if (e.alpha == null || e.beta == null || e.gamma == null) return;
+    const cur = { alpha: e.alpha, beta: e.beta, gamma: e.gamma };
+    if (!GYRO_BASE) {
+      GYRO_BASE = { ...cur };
+      GYRO_LAST = { ...cur };
+      return;
+    }
+    const dAlpha = angleDiffDeg(cur.alpha, GYRO_LAST.alpha);
+    const dBeta = cur.beta - GYRO_LAST.beta;
+    const dGamma = cur.gamma - GYRO_LAST.gamma;
+    GYRO_LAST = cur;
+
+    // Ignora saltos bruscos de bússola
+    if (Math.abs(dAlpha) < 25 && Math.abs(dBeta) < 25 && Math.abs(dGamma) < 25) {
+      // Rodeá-lo ao girar o celular ao redor da mesa
+      const yawDeltaRad = ((-dAlpha * 0.85 + dGamma * 0.35) * Math.PI) / 180;
+      AR_THETA_RAD += yawDeltaRad;
+
+      // Inclinação vertical da câmera (olhar mais de cima ou mais de lado na mesa)
+      const targetPhiDeg = Math.max(18, Math.min(84, 90 - Math.max(8, Math.min(82, cur.beta)) * 0.55));
+      const targetPhiRad = (targetPhiDeg * Math.PI) / 180;
+      AR_PHI_RAD = AR_PHI_RAD * 0.86 + targetPhiRad * 0.14;
+
+      applyDishZoom(ZOOM_LEVEL, AR_THETA_RAD, AR_PHI_RAD);
+    }
+  }
+
+  function medianValue(arr) {
+    if (!arr.length) return 0;
+    const s = arr.slice().sort((a, b) => a - b);
+    const mid = s.length >> 1;
+    return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) * 0.5;
+  }
+
+  function startWebARTracker() {
+    stopWebARTracker();
+    AR_PREV_GRAY = null;
+    GYRO_BASE = null;
+    GYRO_LAST = null;
+    const mv = $('#heroModelViewer');
+    if (mv && typeof mv.getCameraOrbit === 'function') {
+      try {
+        const orb = mv.getCameraOrbit();
+        if (orb) {
+          AR_THETA_RAD = orb.theta || 0;
+          AR_PHI_RAD = orb.phi || (62 * Math.PI) / 180;
+        }
+      } catch (e) {}
+    }
+    if (!AR_TRACK_CANVAS) {
+      AR_TRACK_CANVAS = document.createElement('canvas');
+      AR_TRACK_CANVAS.width = AR_W;
+      AR_TRACK_CANVAS.height = AR_H;
+      AR_TRACK_CTX = AR_TRACK_CANVAS.getContext('2d', { willReadFrequently: true });
+    }
+
+    const ringAngles = [];
+    for (let i = 0; i < 12; i++) {
+      ringAngles.push((i * Math.PI * 2) / 12);
+    }
+
+    const stepFrame = () => {
+      if (!PLACEMENT_CONFIRMED) return;
+      const video = $('#liveCameraFeed');
+      const wrap = $('#canvasWrap');
+      if (video && wrap && video.readyState >= 2 && !video.paused && !USER_TOUCHING_VIEWER) {
+        const rect = wrap.getBoundingClientRect();
+        if (rect.width > 40 && rect.height > 40) {
+          AR_TRACK_CTX.drawImage(video, 0, 0, AR_W, AR_H);
+          const rgba = AR_TRACK_CTX.getImageData(0, 0, AR_W, AR_H).data;
+          const gray = new Uint8Array(AR_W * AR_H);
+          for (let i = 0, j = 0; i < gray.length; i++, j += 4) {
+            gray[i] = (rgba[j] * 77 + rgba[j + 1] * 150 + rgba[j + 2] * 29) >> 8;
+          }
+
+          if (AR_PREV_GRAY) {
+            // Ponto âncora atual na mesa convertido para a grade 96x96
+            const ax = Math.round(((rect.width * 0.5 + TABLE_OFFSET.x) / rect.width) * AR_W);
+            const ay = Math.round(((rect.height * 0.56 + TABLE_OFFSET.y) / rect.height) * AR_H);
+            const R = 13;
+            const searchRange = 5;
+
+            const dxs = [];
+            const dys = [];
+            const ptsPrev = [];
+            const ptsCurr = [];
+
+            for (let k = 0; k < ringAngles.length; k++) {
+              const px = Math.round(ax + Math.cos(ringAngles[k]) * R);
+              const py = Math.round(ay + Math.sin(ringAngles[k]) * R);
+              if (px < 9 || px >= AR_W - 9 || py < 9 || py >= AR_H - 9) continue;
+
+              // Verifica se a região da mesa tem textura mínima (gradiente)
+              let contrast = 0;
+              const cIdx = py * AR_W + px;
+              contrast = Math.abs(AR_PREV_GRAY[cIdx + 2] - AR_PREV_GRAY[cIdx - 2]) +
+                         Math.abs(AR_PREV_GRAY[cIdx + AR_W * 2] - AR_PREV_GRAY[cIdx - AR_W * 2]);
+              if (contrast < 7) continue;
+
+              let bestSad = 1e9;
+              let bestDx = 0;
+              let bestDy = 0;
+
+              for (let sy = -searchRange; sy <= searchRange; sy++) {
+                for (let sx = -searchRange; sx <= searchRange; sx++) {
+                  let sad = 0;
+                  for (let wy = -3; wy <= 3; wy += 2) {
+                    const rowPrev = (py + wy) * AR_W + px;
+                    const rowCurr = (py + wy + sy) * AR_W + px + sx;
+                    sad += Math.abs(AR_PREV_GRAY[rowPrev - 3] - gray[rowCurr - 3]) +
+                           Math.abs(AR_PREV_GRAY[rowPrev - 1] - gray[rowCurr - 1]) +
+                           Math.abs(AR_PREV_GRAY[rowPrev + 1] - gray[rowCurr + 1]) +
+                           Math.abs(AR_PREV_GRAY[rowPrev + 3] - gray[rowCurr + 3]);
+                  }
+                  // Leve penalidade para deslocamento zero falso em áreas lisas
+                  sad += (Math.abs(sx) + Math.abs(sy)) * 0.4;
+                  if (sad < bestSad) {
+                    bestSad = sad;
+                    bestDx = sx;
+                    bestDy = sy;
+                  }
+                }
+              }
+
+              if (bestSad < 420) {
+                dxs.push(bestDx);
+                dys.push(bestDy);
+                ptsPrev.push({ x: px, y: py });
+                ptsCurr.push({ x: px + bestDx, y: py + bestDy });
+              }
+            }
+
+            if (dxs.length >= 4) {
+              const medDx = medianValue(dxs);
+              const medDy = medianValue(dys);
+
+              // 1. Mantém o prato FIXO no ponto da mesa quando o celular se move
+              const screenDx = (medDx / AR_W) * rect.width;
+              const screenDy = (medDy / AR_H) * rect.height;
+              if (Math.hypot(screenDx, screenDy) > 0.35) {
+                const maxTx = rect.width * 0.44;
+                const maxTy = rect.height * 0.44;
+                TABLE_OFFSET.x = Math.max(-maxTx, Math.min(maxTx, TABLE_OFFSET.x + screenDx * 0.92));
+                TABLE_OFFSET.y = Math.max(-maxTy, Math.min(maxTy, TABLE_OFFSET.y + screenDy * 0.92));
+                syncPlacementTransform();
+              }
+
+              // 2. Aproximar-se / Desaproximar-se fisicamente com o celular (escala radial na mesa) e rodear
+              const newAx = ax + medDx;
+              const newAy = ay + medDy;
+              const scales = [];
+              const dAngles = [];
+              for (let i = 0; i < ptsPrev.length; i++) {
+                const vx0 = ptsPrev[i].x - ax;
+                const vy0 = ptsPrev[i].y - ay;
+                const vx1 = ptsCurr[i].x - newAx;
+                const vy1 = ptsCurr[i].y - newAy;
+                const r0 = Math.hypot(vx0, vy0);
+                const r1 = Math.hypot(vx1, vy1);
+                if (r0 > 4 && r1 > 4) {
+                  const sc = r1 / r0;
+                  if (sc > 0.82 && sc < 1.22) scales.push(sc);
+                  let da = Math.atan2(vy1, vx1) - Math.atan2(vy0, vx0);
+                  if (da > Math.PI) da -= Math.PI * 2;
+                  if (da < -Math.PI) da += Math.PI * 2;
+                  if (Math.abs(da) < 0.35) dAngles.push(da);
+                }
+              }
+
+              let zoomUpdated = false;
+              let nextZoom = ZOOM_LEVEL;
+              if (scales.length >= 4) {
+                const medScale = medianValue(scales);
+                if (Math.abs(medScale - 1.0) > 0.012) {
+                  const dampedScale = 1 + (medScale - 1) * 0.65;
+                  nextZoom = Math.max(0.25, Math.min(3.0, ZOOM_LEVEL * dampedScale));
+                  zoomUpdated = true;
+                }
+              }
+              if (dAngles.length >= 4) {
+                const medAng = medianValue(dAngles);
+                if (Math.abs(medAng) > 0.008) {
+                  AR_THETA_RAD += medAng * 0.75;
+                  zoomUpdated = true;
+                }
+              }
+              if (zoomUpdated) {
+                applyDishZoom(nextZoom, AR_THETA_RAD, AR_PHI_RAD);
+              }
+            }
+          }
+          AR_PREV_GRAY = gray;
+        }
+      }
+      AR_TRACKER_RAF = requestAnimationFrame(stepFrame);
+    };
+
+    AR_TRACKER_RAF = requestAnimationFrame(stepFrame);
+  }
+
+  function stopWebARTracker() {
+    if (AR_TRACKER_RAF) {
+      cancelAnimationFrame(AR_TRACKER_RAF);
+      AR_TRACKER_RAF = null;
+    }
+    AR_PREV_GRAY = null;
+  }
+
+  function applyDishZoom(newZoom, customThetaRad = null, customPhiRad = null) {
+    const mv = $('#heroModelViewer');
+    const mover = $('#tableReticleMover');
+    if (!mv) return;
+    ZOOM_LEVEL = Math.max(0.25, Math.min(3.0, Number(newZoom) || 0.86));
+    const slider = $('#zoomSlider');
+    if (slider) slider.value = String(ZOOM_LEVEL);
+
+    const zScaleStr = Math.max(0.28, Math.min(1.35, ZOOM_LEVEL)).toFixed(3);
+    if (mover) mover.style.setProperty('--zscale', zScaleStr);
+
+    let thetaStr = '0deg';
+    let phiStr = '62deg';
+    if (typeof customThetaRad === 'number' && typeof customPhiRad === 'number') {
+      thetaStr = `${customThetaRad.toFixed(4)}rad`;
+      phiStr = `${customPhiRad.toFixed(4)}rad`;
+    } else if (typeof mv.getCameraOrbit === 'function') {
+      try {
+        const orb = mv.getCameraOrbit();
+        if (orb && typeof orb.theta === 'number' && typeof orb.phi === 'number') {
+          AR_THETA_RAD = orb.theta;
+          AR_PHI_RAD = orb.phi;
+          thetaStr = `${orb.theta.toFixed(4)}rad`;
+          phiStr = `${orb.phi.toFixed(4)}rad`;
+        }
+      } catch (e) {}
+    }
+
+    if (ZOOM_LEVEL <= 1.0) {
+      mv.style.setProperty('--zscale', Math.max(0.28, ZOOM_LEVEL).toFixed(3));
+      mv.cameraOrbit = `${thetaStr} ${phiStr} auto`;
+      mv.fieldOfView = '36deg';
+    } else {
+      mv.style.setProperty('--zscale', '1');
+      const radiusCm = Math.max(10, Math.round(62 / Math.pow(ZOOM_LEVEL, 0.95)));
+      const fovDeg = Math.max(9, (36 / Math.pow(ZOOM_LEVEL, 0.82)).toFixed(1));
+      mv.cameraOrbit = `${thetaStr} ${phiStr} ${radiusCm}cm`;
+      mv.fieldOfView = `${fovDeg}deg`;
+    }
+  }
+
+  function stepDishZoom(delta) {
+    applyDishZoom(ZOOM_LEVEL + delta);
+  }
+
+  function ensureModelViewerLoaded() {
+    if (MV_ENGINE_LOADED) return;
+    MV_ENGINE_LOADED = true;
+    const s = document.createElement('script');
+    s.type = 'module';
+    s.src = '/vendor/model-viewer.min.js';
+    document.head.appendChild(s);
+
+    customElements.whenDefined('model-viewer').then(() => {
+      const MV = customElements.get('model-viewer');
+      if (MV) {
+        MV.dracoDecoderLocation = '/vendor/draco/';
+        MV.minimumRenderScale = 1.0;
+      }
+      setupHeroViewerEvents();
+    });
+  }
+
+  function setupHeroViewerEvents() {
+    const mv = $('#heroModelViewer');
+    const loader = $('#mvLoader');
+    const fill = $('#mvBarFill');
+    const txt = $('#mvLoaderText');
+    if (!mv) return;
+
+    mv.addEventListener('progress', (e) => {
+      const pct = Math.round(((e.detail && e.detail.totalProgress) || 0) * 100);
+      fill.style.width = pct + '%';
+      txt.textContent = pct < 100 ? `Carregando 3D (${pct}%)` : 'Renderizando 3D...';
+      if (pct >= 100) setTimeout(() => loader.classList.remove('visible'), 150);
+    });
+
+    mv.addEventListener('load', () => {
+      loader.classList.remove('visible');
+      const MV = customElements.get('model-viewer');
+      if (MV) MV.minimumRenderScale = 1.0;
+      boostMaxAnisotropy(mv);
+      if (VIEWER_MODE === 'camera') applyDishZoom(ZOOM_LEVEL);
+    });
+
+    let settleTimer = null;
+    const onInteractStart = () => {
+      USER_TOUCHING_VIEWER = true;
+      if (ZOOM_LEVEL > 1.3) return;
+      const MV = customElements.get('model-viewer');
+      if (MV) MV.minimumRenderScale = 0.75;
+      if (settleTimer) clearTimeout(settleTimer);
+    };
+    const onInteractEnd = () => {
+      USER_TOUCHING_VIEWER = false;
+      if (typeof mv.getCameraOrbit === 'function') {
+        try {
+          const orb = mv.getCameraOrbit();
+          if (orb) {
+            AR_THETA_RAD = orb.theta || 0;
+            AR_PHI_RAD = orb.phi || (62 * Math.PI) / 180;
+          }
+        } catch (e) {}
+      }
+      if (settleTimer) clearTimeout(settleTimer);
+      settleTimer = setTimeout(() => {
+        const MV = customElements.get('model-viewer');
+        if (MV) MV.minimumRenderScale = 1.0;
+      }, 150);
+    };
+    mv.addEventListener('pointerdown', onInteractStart, { passive: true });
+    mv.addEventListener('touchstart', onInteractStart, { passive: true });
+    mv.addEventListener('pointerup', onInteractEnd, { passive: true });
+    mv.addEventListener('touchend', onInteractEnd, { passive: true });
+
+    const wrap = $('#canvasWrap');
+    let dragStart = null;
+    let touchDownPt = null;
+    let pinchStartDist = null;
+    let pinchStartZoom = 0.86;
+
+    wrap.addEventListener('touchstart', (e) => {
+      if (VIEWER_MODE !== 'camera') return; // no modo 3D quem controla gestos é o model-viewer
+      USER_TOUCHING_VIEWER = true;
+      if (e.touches.length === 2) {
+        dragStart = null;
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        pinchStartDist = Math.hypot(dx, dy) || 1;
+        pinchStartZoom = ZOOM_LEVEL;
+      } else if ((!PLACEMENT_CONFIRMED || MOVE_ON_TABLE_ON) && e.touches.length === 1) {
+        pinchStartDist = null;
+        DID_DRAG_RETICLE = false;
+        touchDownPt = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        dragStart = {
+          x: e.touches[0].clientX - TABLE_OFFSET.x,
+          y: e.touches[0].clientY - TABLE_OFFSET.y
+        };
+      }
+    }, { passive: true });
+
+    wrap.addEventListener('touchmove', (e) => {
+      if (VIEWER_MODE !== 'camera') return;
+      if (e.touches.length === 2 && pinchStartDist) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const dist = Math.hypot(dx, dy) || 1;
+        const ratio = dist / pinchStartDist;
+        applyDishZoom(pinchStartZoom * ratio);
+      } else if ((!PLACEMENT_CONFIRMED || MOVE_ON_TABLE_ON) && e.touches.length === 1 && dragStart) {
+        if (touchDownPt && Math.hypot(e.touches[0].clientX - touchDownPt.x, e.touches[0].clientY - touchDownPt.y) > 8) {
+          DID_DRAG_RETICLE = true;
+        }
+        TABLE_OFFSET.x = Math.max(-180, Math.min(180, e.touches[0].clientX - dragStart.x));
+        TABLE_OFFSET.y = Math.max(-220, Math.min(220, e.touches[0].clientY - dragStart.y));
+        syncPlacementTransform();
+      }
+    }, { passive: true });
+
+    wrap.addEventListener('touchend', (e) => {
+      if (e.touches.length < 2) pinchStartDist = null;
+      if (e.touches.length === 0) {
+        dragStart = null;
+        USER_TOUCHING_VIEWER = false;
+        AR_PREV_GRAY = null;
+      }
+    }, { passive: true });
+
+    wrap.addEventListener('wheel', (e) => {
+      if (VIEWER_MODE !== 'camera') return;
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 0.14 : -0.14;
+      applyDishZoom(ZOOM_LEVEL + delta);
+    }, { passive: false });
+  }
+
+  const IS_IOS_PAGE = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  function prefetchGlb(url) {
+    if (!url || IS_IOS_PAGE || PREFETCHED_GLBS.has(url)) return; // iPhone: o AR usa o USDZ, o GLB não serve
+    PREFETCHED_GLBS.add(url);
+    const link = document.createElement('link');
+    link.rel = 'prefetch';
+    link.href = url;
+    link.as = 'fetch';
+    document.head.appendChild(link);
+  }
+
+  function renderCameraDishStrip() {
+    const strip = $('#cameraDishStrip');
+    if (!strip) return;
+    const items = CATALOG.items || [];
+    strip.innerHTML = items.map(it => {
+      const posterUrl = it.poster || `/models/${it.slug}-poster.webp`;
+      const isCurrent = CURRENT_ITEM && CURRENT_ITEM.slug === it.slug;
+      const shortName = it.name.replace(/4K|8K/gi, '').trim();
+      return `
+        <button type="button" class="cam-dish-pill ${isCurrent ? 'active' : ''}" onclick="openDishViewer('${it.slug}', 'camera', true)">
+          <img src="${posterUrl}" alt="" width="26" height="26" loading="lazy" />
+          <span>${shortName}</span>
+        </button>
+      `;
+    }).join('');
+  }
+
+  function triggerBoomAnimation(mv) {
+    mv.classList.remove('boom-enter');
+    void mv.offsetWidth;
+    mv.classList.add('boom-enter');
+    clearTimeout(mv._boomT);
+    mv._boomT = setTimeout(() => mv.classList.remove('boom-enter'), 380);
+  }
+
+  // A página de visualização 3D foi removida (o botão 3D de cada prato abre direto o AR). Mantido só para guardar o prato atual.
+  function openDishViewer(slug) {
+    const item = (CATALOG.items || []).find((x) => x.slug === slug);
+    if (item) CURRENT_ITEM = item;
+  }
+
+  async function startLiveCameraAR() {
+    const wrap = $('#canvasWrap');
+    const videoEl = $('#liveCameraFeed');
+    const mv = $('#heroModelViewer');
+    mv.cameraOrbit = '0deg 62deg auto';
+    AR_THETA_RAD = 0;
+    AR_PHI_RAD = (62 * Math.PI) / 180;
+    applyDishZoom(ZOOM_LEVEL);
+
+    if (LIVE_CAMERA_STREAM && LIVE_CAMERA_STREAM.active) {
+      if (videoEl.srcObject !== LIVE_CAMERA_STREAM) {
+        videoEl.srcObject = LIVE_CAMERA_STREAM;
+      }
+      wrap.classList.add('camera-active');
+      return;
+    }
+    try {
+      LIVE_CAMERA_STREAM = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+        audio: false
+      });
+      videoEl.srcObject = LIVE_CAMERA_STREAM;
+      wrap.classList.add('camera-active');
+    } catch (err) {
+      // Se estiver em um computador sem câmera, usa o fundo de mesa do restaurante mantendo o fluxo de posição -> prato
+      wrap.classList.remove('camera-active');
+    }
+  }
+
+  function stopLiveCamera() {
+    stopWebARTracker();
+    if (LIVE_CAMERA_STREAM) {
+      LIVE_CAMERA_STREAM.getTracks().forEach(t => t.stop());
+      LIVE_CAMERA_STREAM = null;
+    }
+  }
+
+  function closeViewerModal() {
+    stopLiveCamera();
+    const arSheet = $('#arSheet');
+    if (arSheet) arSheet.hidden = true;
+    document.body.classList.remove('modal-open');
+    $('#viewerModal').classList.remove('open');
+  }
+
+  function resetCameraOrbit() {
+    const mv = $('#heroModelViewer');
+    if (VIEWER_MODE === '3d') {
+      mv.cameraOrbit = '28deg 68deg 120%';
+      mv.fieldOfView = '32deg';
+      return;
+    }
+    MOVE_ON_TABLE_ON = false;
+    TABLE_OFFSET = { x: 0, y: 0 };
+    AR_PREV_GRAY = null;
+    GYRO_BASE = null;
+    AR_THETA_RAD = 0;
+    AR_PHI_RAD = (62 * Math.PI) / 180;
+    syncPlacementTransform();
+    mv.setAttribute('camera-controls', '');
+    mv.cameraOrbit = '0deg 62deg auto';
+    applyDishZoom(0.86, AR_THETA_RAD, AR_PHI_RAD);
+    if (PLACEMENT_CONFIRMED) triggerBoomAnimation(mv);
+  }
+
+  // Scanner 3D 4K & Sketchfab Modal
+  function openScannerModal() {
+    document.body.classList.add('modal-open');
+    $('#scannerModal').classList.add('open');
+  }
+  function closeScannerModal() {
+    stopScanCamera();
+    document.body.classList.remove('modal-open');
+    $('#scannerModal').classList.remove('open');
+  }
+  async function toggleScanCameraCapture() {
+    const box = $('#scanCamBox');
+    if (box.classList.contains('open')) {
+      stopScanCamera();
+      box.classList.remove('open');
+      return;
+    }
+    try {
+      SCAN_CAMERA_STREAM = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 3840 }, height: { ideal: 2160 } },
+        audio: false
+      });
+      $('#scanCaptureVideo').srcObject = SCAN_CAMERA_STREAM;
+      box.classList.add('open');
+    } catch (e) {
+      alert('Não foi possível acessar a câmera: ' + e.message);
+    }
+  }
+  function stopScanCamera() {
+    if (AUTO_BURST_TIMER) { clearInterval(AUTO_BURST_TIMER); AUTO_BURST_TIMER = null; }
+    if (SCAN_CAMERA_STREAM) { SCAN_CAMERA_STREAM.getTracks().forEach(t => t.stop()); SCAN_CAMERA_STREAM = null; }
+  }
+  function snapFrameFromCamera() {
+    const video = $('#scanCaptureVideo');
+    if (!video || !video.videoWidth) return;
+    const c = document.createElement('canvas');
+    c.width = video.videoWidth;
+    c.height = video.videoHeight;
+    c.getContext('2d').drawImage(video, 0, 0);
+    c.toBlob(blob => {
+      if (!blob) return;
+      CAPTURED_BLOBS.push(blob);
+      $('#capturedFramesBadge').textContent = `${CAPTURED_BLOBS.length} fotos (${c.width}×${c.height})`;
+    }, 'image/jpeg', 0.95);
+  }
+  function toggleAutoBurstCapture() {
+    const btn = $('#btnBurst');
+    if (AUTO_BURST_TIMER) {
+      clearInterval(AUTO_BURST_TIMER);
+      AUTO_BURST_TIMER = null;
+      btn.textContent = '⏱ Auto (2/s)';
+    } else {
+      AUTO_BURST_TIMER = setInterval(snapFrameFromCamera, 500);
+      btn.textContent = '⏹ Parar';
+    }
+  }
+  async function submitScanJob(ev) {
+    ev.preventDefault();
+    const fd = new FormData(ev.target);
+    const fileInput = $('#scanFilesInput');
+    if ((!fileInput.files || fileInput.files.length === 0) && CAPTURED_BLOBS.length === 0) {
+      alert('Envie um vídeo/fotos 4K ou capture ângulos com a câmera primeiro.');
+      return;
+    }
+    CAPTURED_BLOBS.forEach((b, idx) => fd.append('files', b, `cam_frame_${String(idx + 1).padStart(4, '0')}.jpg`));
+    const logBox = $('#jobStatusBox');
+    logBox.style.display = 'block';
+    logBox.textContent = 'Enviando arquivos para o pipeline 4K...';
+    const res = await fetch('/api/scan', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (!res.ok) { logBox.textContent = 'Erro: ' + JSON.stringify(data, null, 2); return; }
+    const timer = setInterval(async () => {
+      const r = await fetch(`/api/jobs/${data.job_id}`);
+      const d = await r.json();
+      logBox.textContent = JSON.stringify(d, null, 2);
+      if (d.status === 'completed' || d.status === 'failed') {
+        clearInterval(timer);
+        if (d.status === 'completed') await initApp(true);
+      }
+    }, 2000);
+  }
+  async function submitSketchfabImport(ev) {
+    ev.preventDefault();
+    const logBox = $('#jobStatusBox');
+    logBox.style.display = 'block';
+    logBox.textContent = 'Baixando modelo do Sketchfab API v3 e compilando texturas 4096×4096 + USDZ...';
+    const name = $('#sfName').value;
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const res = await fetch('/api/sketchfab/import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        uid: $('#sfUid').value,
+        api_token: $('#sfToken').value,
+        name,
+        slug,
+        category: $('#sfCategory').value,
+        dish_diameter_cm: parseFloat($('#sfDiam').value || '26')
+      })
+    });
+    const data = await res.json();
+    logBox.textContent = JSON.stringify(data, null, 2);
+    if (res.ok) await initApp(true);
+  }
+
+  // Eventos globais do Template Radar ( Reservas, Pagamento, Carrinho, Scroll )
+  const PAY = { pix: 'Pix', cartao: 'Cartão', dinheiro: 'Dinheiro' };
+  function paintPay() {
+    const on = $('#pay .on');
+    const pickup = $('#addrBox').hidden;
+    const hint = {
+      pix: 'A chave Pix chega na resposta do WhatsApp.',
+      cartao: pickup ? 'Crédito ou débito no local.' : 'Crédito ou débito na entrega: levamos a maquininha.'
+    }[on && on.dataset.pay] || '';
+    $('#payHint').hidden = !hint;
+    $('#payHint').textContent = hint;
+    $('#trocoFld').hidden = !(on && on.dataset.pay === 'dinheiro');
+  }
+  const money = (t) => Number(String(t || '').replace(/[^\d,.]/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.')) || 0;
+
+  const pad = (n) => String(n).padStart(2, '0');
+  const today = new Date();
+  $('#rDate').min = $('#rDate').value = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+  $('#rTime').replaceChildren(...Array.from({ length: 23 }, (_, k) => {
+    const h = 11 + Math.floor((k + 1) / 2);
+    const label = `${pad(h)}:${(k + 1) % 2 ? '30' : '00'}`;
+    return el('option', { value: label, textContent: label, selected: label === '20:00' });
+  }));
+
+  document.addEventListener('click', (e) => {
+    const g = e.target.closest('[data-go]');
+    if (g) { e.preventDefault(); return go(g.dataset.go); }
+    const t = e.target.closest('button, a');
+    if (!t) return;
+    if (t.dataset.toast) toast(t.dataset.toast);
+    if (t.dataset.slide) $('#trend').scrollBy({ left: Number(t.dataset.slide) * 185, behavior: 'smooth' });
+    if (t.dataset.scroll) document.getElementById(t.dataset.scroll)?.scrollIntoView({ behavior: 'smooth' });
+    if (t.dataset.people) $('#rPeople').textContent = Math.min(20, Math.max(1, Number($('#rPeople').textContent) + Number(t.dataset.people)));
+    if (t.hasAttribute('data-book')) {
+      const name = $('#rName').value.trim();
+      $('#rNameFld').classList.toggle('miss', !name);
+      if (!name) { $('#rName').focus(); return toast('Digite o seu nome para a reserva.'); }
+      const [y, m, d] = $('#rDate').value.split('-');
+      const note = $('#rNote').value.trim();
+      wa(`Olá! Quero reservar uma mesa:\nDia: ${d}/${m}/${y}\nHorário: ${$('#rTime').value}\nPessoas: ${$('#rPeople').textContent}\nNome: ${name}${note ? `\nObservação: ${note}` : ''}`);
+    }
+    if (t.hasAttribute('data-talk')) {
+      wa('Olá! Vi o cardápio 3D de vocês e gostaria de uma informação.');
+    }
+    if (t.dataset.mode) {
+      document.querySelectorAll('#mode button').forEach(b => b.classList.toggle('on', b === t));
+      const pickup = t.dataset.mode === 'retirada';
+      $('#addrBox').hidden = pickup;
+      $('#modeLabel').textContent = pickup ? 'Retirada / Mesa' : 'Entrega';
+      $('#modeFee').textContent = pickup ? 'No local' : 'Grátis';
+      paintPay();
+    }
+    if (t.dataset.pay) {
+      document.querySelectorAll('#pay button').forEach(b => b.classList.toggle('on', b === t));
+      $('#payFld').classList.remove('miss');
+      paintPay();
+    }
+    if (t.hasAttribute('data-send')) {
+      const pickup = $('#addrBox').hidden;
+      const addr = $('#delAddr').value.trim();
+      const ref = $('#delRef').value.trim();
+      $('#addrFld').classList.toggle('miss', !pickup && !addr);
+      if (!pickup && !addr) { $('#delAddr').focus(); return toast('Digite o endereço de entrega.'); }
+      const pay = $('#pay .on');
+      $('#payFld').classList.toggle('miss', !pay);
+      if (!pay) return toast('Escolha a forma de pagamento.');
+      const total = [...cart.entries()].reduce((sum, [i, q]) => sum + MENU[i].price * q, 0);
+      let payment = PAY[pay.dataset.pay];
+      if (pay.dataset.pay === 'dinheiro') {
+        const troco = money($('#troco').value);
+        $('#trocoFld').classList.toggle('miss', !!$('#troco').value.trim() && troco <= total);
+        if ($('#troco').value.trim() && troco <= total) { $('#troco').focus(); return toast(`Informe um valor maior que ${brl(total)}.`); }
+        payment += troco ? ` (troco para ${brl(troco)})` : '';
+      }
+      const items = [...cart.entries()].map(([i, q]) => `${q}x ${MENU[i].name}`).join('\n');
+      const where = pickup ? 'Vou retirar / consumir no local.' : `Entregar em: ${addr}${ref ? ` (${ref})` : ''}`;
+      wa(`Olá! Meu pedido pelo Cardápio 3D:\n${items}\nTotal: ${brl(total)}\n${where}\nPagamento: ${payment}`);
+    }
+    if (t.hasAttribute('data-clear')) { cart.clear(); paintCart(); paintMenu(); paintTrend(); }
+    if (t.hasAttribute('data-share')) {
+      navigator.share ? navigator.share({ title: st.nome, url: location.href }).catch(() => {}) : toast('Link pronto para compartilhar!');
+    }
+  });
+
+  $('#q').addEventListener('input', paintMenu);
+
+  async function initApp(forceFetch = false) {
+    const qBox = $('#q'); if (qBox) qBox.value = ''; // o navegador pode restaurar um texto antigo e esconder todos os pratos
+    try {
+      if (forceFetch || !CATALOG || !Array.isArray(CATALOG.items) || CATALOG.items.length === 0) {
+        const res = await fetch('/api/catalog', { cache: 'no-store' });
+        if (!res.ok) throw new Error('catálogo HTTP ' + res.status);
+        CATALOG = await res.json();
+      }
+      rebuildUnifiedMenu();
+      applyRestaurantBranding();
+      paintTrend();
+      paintMenu();
+      paintCart();
+      renderCameraDishStrip();
+    } catch (err) {
+      console.error('[cardápio] falha ao montar o cardápio:', err);
+      MENU = [];
+      try { paintMenu(); } catch (_) { /* a tela de erro já foi tentada */ }
+    }
+  }
+
+  // Ponte para /assets/ar.js (AR de marca própria)
+  window.CardapioBridge = {
+    item: () => CURRENT_ITEM,
+    brand: () => st,
+    brl,
+    toast,
+    addToCart: addCurrent3DDishToCart,
+    ensureViewer: ensureModelViewerLoaded,
+    openLegacyCamera: () => { if (CURRENT_ITEM) openDishViewer(CURRENT_ITEM.slug, 'legacy'); },
+    items: () => CATALOG.items || [],
+    pickGlb,
+    setItem: (it) => { CURRENT_ITEM = it; },
+    boostAniso: boostMaxAnisotropy,
+  };
+
+  initApp(false);
+  if (!IS_IOS_PAGE) { // iPhone abre o AR Quick Look direto pelo link do USDZ: não precisa carregar o <model-viewer> (~1 MB)
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(() => ensureModelViewerLoaded(), { timeout: 1200 });
+    } else {
+      setTimeout(() => ensureModelViewerLoaded(), 400);
+    }
+  }
+</script>
+</body>
+</html>
