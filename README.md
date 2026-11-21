@@ -7,9 +7,10 @@ Página de apresentação da Star-net.pro e as demonstrações que ela mostra, h
 | `/` | A landing: Engenharia de Lucro usando software sob medida |
 | `/m/demo/` | Cardápio 3D de demonstração (o restaurante de exemplo é o Dad's Burger) |
 | `/imobiliaria/` | Sistema da recepcionista de imobiliária, **só para ver**: dados de exemplo, nada é gravado |
+| `/dads-burger-painel/` | Painel do restaurante (Dad's Burger como exemplo): pedidos de exemplo, aceitar pedido, chamar motoboy com preço e andamento simulados; nada é gravado |
 | `/creditos/` | Autores e licenças dos modelos 3D |
 
-A versão estática do sistema da imobiliária mostra as telas com dados de exemplo gravados antes; botões que gravam informação avisam que é uma demonstração. O sistema de verdade roda em servidor próprio, com banco de dados e WhatsApp.
+As versões estáticas do sistema da imobiliária e do painel do restaurante mostram as telas com dados de exemplo gravados antes; botões que gravam informação (configurações, chaves, cardápio) avisam que é uma demonstração. No painel do restaurante, aceitar pedidos e chamar o motoboy funcionam na memória da página, com um motoboy simulado, e voltam ao começo ao recarregar. Os sistemas de verdade rodam em servidor próprio, com banco de dados, pagamentos e WhatsApp.
 
 ## Créditos
 
