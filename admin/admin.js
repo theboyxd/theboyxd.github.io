@@ -384,6 +384,7 @@ function editDrawer(orig) {
 
 // ---------------------------------------------------------------- início
 (async function start() {
+  if (window.top !== window.self) { $app.replaceChildren(h('main', { class: 'center' }, h('p', { class: 'muted', text: 'Abra o painel direto em star-net.pro/admin.' }))); return; } // não roda dentro de outro site
   const saved = readAuth();
   if (!saved) { loginView(); return; }
   auth = saved;
