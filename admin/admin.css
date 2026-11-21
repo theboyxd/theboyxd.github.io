@@ -136,3 +136,27 @@ ol.steps{margin:0;padding-left:20px;display:grid;gap:10px;color:var(--muted);fon
 ol.steps b{color:var(--ink)}
 ol.steps .btn{vertical-align:middle}
 .err.info{color:var(--ok)}
+
+/* leitor dentro do painel (PDF e sites) */
+body.has-viewer{overflow:hidden}
+.viewer{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;background:#e9edf5}
+.vw-bar{display:flex;align-items:center;gap:6px;padding:6px max(8px,env(safe-area-inset-right)) 6px max(8px,env(safe-area-inset-left));padding-top:max(6px,env(safe-area-inset-top));background:#fff;border-bottom:1px solid var(--line)}
+.vw-tt{flex:1;min-width:0;display:grid;gap:1px}
+.vw-tt b{font:800 16px/1.2 'Inter Tight','Inter',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vw-sub{font-size:12.5px;color:var(--faint);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vw-acts{display:flex;align-items:center;gap:0}
+.vw-page{font:700 13px/1 'Inter',sans-serif;color:var(--muted);padding:0 8px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.vw-body{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch}
+.pdf-scroll{padding:12px 10px max(40px,env(safe-area-inset-bottom))}
+.pdf-pages{margin:0 auto;display:grid;gap:12px;max-width:none}
+.pdf-page{width:100%;background:#fff;box-shadow:0 2px 12px rgba(11,31,75,.14);border-radius:4px;overflow:hidden}
+.pdf-page canvas{display:block;width:100%;height:auto}
+.pdf-status{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;padding:48px 12px;font-weight:700;color:var(--muted);text-align:center}
+.pdf-alt{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.site-body{display:flex;flex-direction:column;overflow:hidden;background:#dfe5f1}
+.site-wrap{flex:1;min-height:0;display:flex;justify-content:center}
+.site-frame{flex:1;width:100%;height:100%;border:0;background:#fff}
+.site-wrap.as-phone{padding:14px 0}
+.site-wrap.as-phone .site-frame{flex:none;width:390px;max-width:calc(100% - 24px);border-radius:26px;box-shadow:0 0 0 9px #0b1f4b,0 30px 60px -20px rgba(11,31,75,.5)}
+.site-hint{margin:0;padding:6px 12px max(6px,env(safe-area-inset-bottom));font-size:12px;color:var(--faint);text-align:center;background:#fff;border-top:1px solid var(--line)}
+@media (max-width:560px){.vw-page{display:none}}

@@ -1,0 +1,2 @@
+PDF.js 4.10.38 (pdfjs-dist, compilação legacy), da Mozilla, licença Apache-2.0: https://github.com/mozilla/pdf.js
+Usado pelo painel para mostrar os PDFs dentro da própria página.

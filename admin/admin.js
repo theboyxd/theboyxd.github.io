@@ -47,6 +47,11 @@ const ICONS = {
   out: 'M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 16l-4-4 4-4M6 12h10',
   sync: 'M20 11a8 8 0 0 0-14.3-4.3L4 9M4 4v5h5M4 13a8 8 0 0 0 14.3 4.3L20 15M20 20v-5h-5',
   trash: 'M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13',
+  back: 'M15 5l-7 7 7 7',
+  minus: 'M5 12h14',
+  phone: 'M8 3h8a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM11 18h2',
+  monitor: 'M3 5h18v11H3zM8 20h8M12 16v4',
+  eye: 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6',
 };
 function ic(name) {
   const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -146,6 +151,141 @@ async function fail(e) {
   if (e instanceof SessaoError) { closeDrawer(); loginView(e.message); return; }
   if (e && e.conflict) { try { await loadData(); } catch (x) { /* fica com o que tinha */ } closeDrawer(); if (data) appView(); toast(e.message, 'err', 7000); return; }
   toast((e && e.message) || 'Algo deu errado.', 'err', 7000);
+}
+
+
+// ---------------------------------------------------------------- leitor dentro do painel: PDFs (PDF.js) e sites (moldura)
+const pdfCache = new Map(); // id → bytes do PDF, só enquanto esta aba estiver aberta
+let viewerEl = null;
+function closeViewer(fromHistory) {
+  if (!viewerEl) return;
+  const v = viewerEl; viewerEl = null;
+  try { if (v._cleanup) v._cleanup(); } catch (e) { /* ok */ }
+  v.remove(); document.body.classList.remove('has-viewer');
+  document.removeEventListener('keydown', viewerKey, true);
+  if (!fromHistory && history.state && history.state.snViewer) history.back();
+}
+function viewerKey(ev) { if (ev.key === 'Escape') { ev.stopImmediatePropagation(); closeViewer(); } }
+window.addEventListener('popstate', () => { if (viewerEl) closeViewer(true); }); // o "voltar" do celular fecha o leitor, não o painel
+function openViewer(title, sub, actions, body) {
+  const had = Boolean(viewerEl);
+  if (had) closeViewer(true);
+  const bar = h('header', { class: 'vw-bar' },
+    h('button', { class: 'btn ghost icon-btn', type: 'button', 'aria-label': 'Voltar', title: 'Voltar', onclick: () => closeViewer() }, ic('back')),
+    h('div', { class: 'vw-tt' }, h('b', { text: title }), sub ? h('small', { class: 'vw-sub', text: sub }) : null),
+    h('div', { class: 'vw-acts' }, actions));
+  viewerEl = h('div', { class: 'viewer', role: 'dialog', 'aria-modal': 'true', 'aria-label': title }, bar, body);
+  document.body.append(viewerEl); document.body.classList.add('has-viewer');
+  document.addEventListener('keydown', viewerKey, true);
+  if (!had) { try { history.pushState({ snViewer: 1 }, ''); } catch (e) { /* ok */ } }
+  bar.querySelector('button').focus();
+  return viewerEl;
+}
+
+let pdfjsP = null;
+function loadPdfjs() {
+  if (!pdfjsP) {
+    pdfjsP = (async () => {
+      if (!Promise.withResolvers) Promise.withResolvers = function () { let a; let b; const p = new Promise((x, y) => { a = x; b = y; }); return { promise: p, resolve: a, reject: b }; };
+      const m = await import('./pdfjs/pdf.min.js');
+      m.GlobalWorkerOptions.workerSrc = new URL('./pdfjs/pdf.worker.min.js', import.meta.url).href;
+      return m;
+    })().catch((e) => { pdfjsP = null; throw e; });
+  }
+  return pdfjsP;
+}
+async function pdfBytes(d) {
+  if (pdfCache.has(d.id)) return pdfCache.get(d.id);
+  const r = await call('baixarPdf', { id: d.id });
+  if (r.erro || !r.base64) throw new Error('o servidor não achou esse PDF na pasta do painel');
+  const bin = atob(r.base64); const u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  pdfCache.set(d.id, u8);
+  return u8;
+}
+async function viewPdf(d) {
+  const pages = h('div', { class: 'pdf-pages' });
+  const status = h('div', { class: 'pdf-status' }, h('span', { class: 'spin' }), h('span', { text: 'Buscando o PDF…' }));
+  const scroller = h('div', { class: 'vw-body pdf-scroll' }, status, pages);
+  const pageInfo = h('span', { class: 'vw-page', 'aria-live': 'polite' });
+  let zoom = 1; let doc = null; let io = null; let gone = false; let setZoom = () => {};
+  const zoomOut = h('button', { class: 'btn ghost icon-btn', type: 'button', 'aria-label': 'Diminuir', title: 'Diminuir', onclick: () => setZoom(zoom / 1.25) }, ic('minus'));
+  const zoomIn = h('button', { class: 'btn ghost icon-btn', type: 'button', 'aria-label': 'Aumentar', title: 'Aumentar', onclick: () => setZoom(zoom * 1.25) }, ic('plus'));
+  const baixar = h('button', { class: 'btn ghost icon-btn', type: 'button', 'aria-label': 'Baixar', title: 'Baixar', onclick: () => abrirPdf(d, 'baixar') }, ic('down'));
+  const v = openViewer(d.nome, [dataBR(d.data), d.tamanho ? mb(d.tamanho) : ''].filter(Boolean).join(' · '), [pageInfo, zoomOut, zoomIn, baixar], scroller);
+  v._cleanup = () => { gone = true; if (io) io.disconnect(); if (doc) doc.destroy(); };
+  try {
+    const [pdfjs, bytes] = await Promise.all([loadPdfjs(), pdfBytes(d)]);
+    if (gone) return;
+    status.lastChild.textContent = 'Abrindo…';
+    doc = await pdfjs.getDocument({ data: bytes.slice(0), isEvalSupported: false }).promise; // cópia: o PDF.js entrega os bytes ao leitor em segundo plano
+    if (gone) return;
+    const p1 = (await doc.getPage(1)).getViewport({ scale: 1 });
+    status.remove();
+    const base = () => Math.min(scroller.clientWidth - 20, 1100);
+    const slots = [];
+    for (let i = 1; i <= doc.numPages; i++) { const sl = h('div', { class: 'pdf-page', 'data-n': String(i) }); sl.style.aspectRatio = p1.width + ' / ' + p1.height; pages.append(sl); slots.push(sl); }
+    pages.style.width = base() + 'px';
+    pageInfo.textContent = '1 / ' + doc.numPages;
+    const drawn = new Map(); // página → zoom com que foi desenhada
+    async function draw(sl) {
+      const n = Number(sl.dataset.n); const z = zoom;
+      if (drawn.get(n) === z) return;
+      drawn.set(n, z);
+      const page = await doc.getPage(n); if (gone || drawn.get(n) !== z) return;
+      const vp0 = page.getViewport({ scale: 1 });
+      sl.style.aspectRatio = vp0.width + ' / ' + vp0.height;
+      const cssW = sl.clientWidth || base();
+      const px = Math.min(cssW * Math.min(window.devicePixelRatio || 1, 2), 2400); // nítido sem gastar memória demais
+      const vp = page.getViewport({ scale: px / vp0.width });
+      const c = document.createElement('canvas'); c.width = Math.floor(vp.width); c.height = Math.floor(vp.height);
+      c.setAttribute('aria-label', 'Página ' + n);
+      await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+      if (gone || drawn.get(n) !== z) return;
+      sl.replaceChildren(c);
+    }
+    io = new IntersectionObserver((ents) => {
+      for (const e of ents) {
+        if (e.isIntersecting) draw(e.target).catch(() => {});
+        else if (e.target.firstChild) { e.target.replaceChildren(); drawn.delete(Number(e.target.dataset.n)); } // solta a memória das páginas longe da tela
+      }
+    }, { root: scroller, rootMargin: '900px 0px' });
+    slots.forEach((sl) => io.observe(sl));
+    scroller.addEventListener('scroll', () => {
+      const mid = scroller.scrollTop + scroller.clientHeight / 3; let cur = 1;
+      for (const sl of slots) { if (sl.offsetTop <= mid) cur = Number(sl.dataset.n); else break; }
+      pageInfo.textContent = cur + ' / ' + doc.numPages;
+    }, { passive: true });
+    setZoom = (z) => {
+      const nz = Math.max(0.5, Math.min(3, z)); if (nz === zoom) return;
+      const frac = scroller.scrollTop / Math.max(1, scroller.scrollHeight);
+      zoom = nz; pages.style.width = Math.round(base() * zoom) + 'px';
+      drawn.clear(); slots.forEach((sl) => { sl.replaceChildren(); io.unobserve(sl); io.observe(sl); });
+      scroller.scrollTop = frac * scroller.scrollHeight;
+    };
+  } catch (e) {
+    if (gone) return;
+    if (e instanceof SessaoError) { closeViewer(); fail(e); return; }
+    status.replaceChildren(h('p', { class: 'err', text: 'Não consegui mostrar o PDF aqui (' + (e.message || 'erro') + ').' }),
+      h('div', { class: 'pdf-alt' }, h('button', { class: 'btn sm', type: 'button', onclick: () => abrirPdf(d, 'abrir') }, 'Abrir em outra aba'), h('a', { class: 'btn sm', href: driveUrl(d), target: '_blank', rel: 'noopener noreferrer' }, 'Abrir no Google Drive')));
+  }
+}
+
+// Sites que não deixam ser abertos dentro de outro site (abrem numa aba nova)
+const NO_FRAME = /(^|\.)(github\.com|google\.com|googleusercontent\.com|instagram\.com|facebook\.com|whatsapp\.com|wa\.me|x\.com|twitter\.com|linkedin\.com|youtube\.com|tiktok\.com)$/i;
+function canFrame(url) { try { const u = new URL(url); return (u.protocol === 'https:' || (LOCAL && u.protocol === 'http:')) && !NO_FRAME.test(u.hostname); } catch (e) { return false; } }
+function openLink(l) { if (canFrame(l.url)) viewSite(l); else window.open(l.url, '_blank', 'noopener'); }
+function viewSite(l) {
+  const u = new URL(l.url);
+  const frame = h('iframe', { class: 'site-frame', src: l.url, title: l.rotulo || u.host, referrerpolicy: 'no-referrer', allow: 'fullscreen; clipboard-write; xr-spatial-tracking; camera; gyroscope; accelerometer; magnetometer' });
+  frame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads'); // o site não consegue tirar você do painel
+  const wrap = h('div', { class: 'site-wrap' }, frame);
+  const body = h('div', { class: 'vw-body site-body' }, wrap, h('p', { class: 'site-hint', text: 'Página em branco? Esse site não deixa ser aberto dentro de outro: use o botão de abrir em nova aba.' }));
+  let cel = false;
+  const dev = h('button', { class: 'btn ghost icon-btn', type: 'button', 'aria-label': 'Ver como no celular', title: 'Ver como no celular' }, ic('phone'));
+  dev.addEventListener('click', () => { cel = !cel; wrap.classList.toggle('as-phone', cel); dev.replaceChildren(ic(cel ? 'monitor' : 'phone')); dev.setAttribute('aria-label', cel ? 'Ver como no computador' : 'Ver como no celular'); dev.title = dev.getAttribute('aria-label'); });
+  const reload = h('button', { class: 'btn ghost icon-btn', type: 'button', 'aria-label': 'Recarregar', title: 'Recarregar', onclick: () => { frame.src = l.url; } }, ic('sync'));
+  const ext = h('a', { class: 'btn ghost icon-btn', href: l.url, target: '_blank', rel: 'noopener noreferrer', 'aria-label': 'Abrir em nova aba', title: 'Abrir em nova aba' }, ic('ext'));
+  openViewer(l.rotulo || u.host, hostOf(l.url), [dev, reload, ext], body);
 }
 
 // ---------------------------------------------------------------- telas
@@ -341,13 +481,13 @@ function card(p) {
     h('div', { class: 'hd' }, h('h3', { text: p.nome }), statusPill(p.status)),
     p.cliente ? h('p', { class: 'cli', text: p.cliente }) : null,
     p.resumo ? h('p', { class: 'res', text: p.resumo }) : null,
-    links.length ? h('div', { class: 'acts' }, links.map((l) => h('a', { class: 'btn sm', href: l.url, target: '_blank', rel: 'noopener noreferrer', onclick: (ev) => ev.stopPropagation() }, l.rotulo || hostOf(l.url), ic('ext')))) : null,
+    links.length ? h('div', { class: 'acts' }, links.map((l) => h('a', { class: 'btn sm', href: l.url, target: '_blank', rel: 'noopener noreferrer', onclick: (ev) => { ev.stopPropagation(); if (canFrame(l.url)) { ev.preventDefault(); viewSite(l); } } }, l.rotulo || hostOf(l.url), ic(canFrame(l.url) ? 'eye' : 'ext')))) : null,
     h('p', { class: 'meta', text: [nL ? nL + (nL === 1 ? ' link' : ' links') : '', nP ? nP + ' PDF' + (nP === 1 ? '' : 's') : ''].filter(Boolean).join(' · ') || 'Sem links nem PDFs' }));
 }
 
 // ---------------------------------------------------------------- gaveta (detalhe e edição)
 let drawerEl = null; let lastFocus = null;
-function closeDrawer() { document.body.classList.remove('has-drawer'); if (drawerEl) { drawerEl.remove(); drawerEl = null; document.removeEventListener('keydown', escClose); if (lastFocus && lastFocus.isConnected) lastFocus.focus(); } }
+function closeDrawer() { if (typeof closeViewer === 'function' && viewerEl) closeViewer(); document.body.classList.remove('has-drawer'); if (drawerEl) { drawerEl.remove(); drawerEl = null; document.removeEventListener('keydown', escClose); if (lastFocus && lastFocus.isConnected) lastFocus.focus(); } }
 function escClose(ev) { if (ev.key === 'Escape') closeDrawer(); }
 function openDrawer(titleId, header, body, footer) {
   closeDrawer(); lastFocus = document.activeElement;
@@ -367,11 +507,11 @@ function detailDrawer(p) {
       p.cliente || p.resumo ? h('div', { class: 'sec' }, p.cliente ? h('p', { class: 'lead', text: p.cliente }) : null, p.resumo ? h('p', { class: 'lead', text: p.resumo }) : null) : null,
       h('div', { class: 'sec' }, h('h4', { text: 'Sites e versões' }),
         groups.length ? groups.map(([t, ls]) => h('div', { class: 'grp' }, h('small', { text: t }),
-          ls.map((l) => h('a', { class: 'row', href: l.url, target: '_blank', rel: 'noopener noreferrer' }, h('span', { class: 'tx' }, h('b', { text: l.rotulo || hostOf(l.url) }), h('small', { text: hostOf(l.url) })), ic('ext')))))
+          ls.map((l) => h('a', { class: 'row', href: l.url, target: '_blank', rel: 'noopener noreferrer', onclick: (ev) => { if (canFrame(l.url)) { ev.preventDefault(); viewSite(l); } } }, h('span', { class: 'tx' }, h('b', { text: l.rotulo || hostOf(l.url) }), h('small', { text: canFrame(l.url) ? hostOf(l.url) : hostOf(l.url) + ' · abre numa aba nova' })), ic(canFrame(l.url) ? 'eye' : 'ext')))))
           : h('p', { class: 'lead', text: 'Nenhum link ainda.' })),
       h('div', { class: 'sec' }, h('h4', { text: 'PDFs' }),
         pdfs.length ? pdfs.map((d) => h('div', { class: 'row' }, ic('pdf'), h('span', { class: 'tx' }, h('b', { text: d.nome }), h('small', { text: [dataBR(d.data), d.tamanho ? mb(d.tamanho) : ''].filter(Boolean).join(' · ') || (d.id ? 'no seu Drive' : 'arquivo ainda não enviado') })),
-          d.id ? h('span', { class: 'btns' }, h('button', { class: 'btn sm', type: 'button', onclick: () => abrirPdf(d, 'abrir') }, 'Abrir'), h('button', { class: 'btn sm icon-btn', type: 'button', 'aria-label': 'Baixar ' + d.nome, title: 'Baixar', onclick: () => abrirPdf(d, 'baixar') }, ic('down'))) : null))
+          d.id ? h('span', { class: 'btns' }, h('button', { class: 'btn sm', type: 'button', onclick: () => viewPdf(d) }, 'Ver'), h('button', { class: 'btn sm icon-btn', type: 'button', 'aria-label': 'Baixar ' + d.nome, title: 'Baixar', onclick: () => abrirPdf(d, 'baixar') }, ic('down'))) : null))
           : h('p', { class: 'lead', text: 'Nenhum PDF ainda.' })),
       p.notas ? h('div', { class: 'sec' }, h('h4', { text: 'Notas' }), h('p', { class: 'notes', text: p.notas })) : null,
     ],
