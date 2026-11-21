@@ -1,0 +1,197 @@
+/**
+ * Star-net.pro · servidor do painel admin (Google Apps Script, grátis, na sua conta Google).
+ *
+ * O que faz: confere o código de 6 dígitos do Google Authenticator e guarda os projetos e os PDFs numa pasta
+ * do seu Google Drive chamada "Star-net · Painel". A página star-net.pro/admin só conversa com este script.
+ *
+ * Instalação (uma vez):
+ *  1. script.google.com → Novo projeto. Apague o que estiver lá e cole todo este código. Salve.
+ *  2. Implantar → Nova implantação → engrenagem → App da Web.
+ *     Executar como: Eu. Quem pode acessar: Qualquer pessoa. Implantar.
+ *  3. Autorize o acesso (o Google avisa que o app não é verificado: é o seu próprio script;
+ *     toque em Avançado → Acessar). Copie o URL do app da Web (termina em /exec) e cole no painel.
+ *  4. O painel mostra um QR Code: leia no Google Authenticator e digite o primeiro código.
+ *
+ * Perdeu o celular? Aqui no editor, rode a função resetarAutenticador() e configure de novo pelo painel.
+ * Travou por erros? Rode destravar().
+ */
+const PASTA = 'Star-net · Painel';
+const ARQUIVO = 'projetos.json';
+const SESSAO_DIAS = 30;          // "lembrar este aparelho"
+const SESSAO_HORAS = 12;         // sem lembrar
+const ERROS_POR_JANELA = 5;      // 5 códigos errados em 15 minutos: espera 15 minutos
+const ERROS_SEGUIDOS = 10;       // 10 errados seguidos: trava 24 horas e avisa você por e-mail
+
+function doGet() { return saida({ ok: true, painel: 'star-net' }); }
+
+function doPost(e) {
+  let req;
+  try { req = JSON.parse((e && e.postData && e.postData.contents) || '{}'); } catch (x) { return saida({ erro: 'pedido' }); }
+  const trava = LockService.getScriptLock();
+  try {
+    switch (req.acao) {
+      case 'estado': return saida(estado());
+      case 'configurar': return saida(comTrava(trava, configurar));
+      case 'confirmar': return saida(comTrava(trava, () => confirmar(String(req.codigo || ''), Boolean(req.lembrar))));
+      case 'entrar': return saida(comTrava(trava, () => entrar(String(req.codigo || ''), Boolean(req.lembrar))));
+      default: break;
+    }
+    if (!sessaoValida(req.sessao)) return saida({ erro: 'sessao' });
+    switch (req.acao) {
+      case 'listar': return saida(listar());
+      case 'enviarPdf': return saida(enviarPdf(req));
+      case 'baixarPdf': return saida(baixarPdf(String(req.id || '')));
+      case 'salvar': return saida(comTrava(trava, () => salvar(req.dados, Number(req.revisao), req.remover || [])));
+      case 'sair': return saida(sair(req.sessao, Boolean(req.todos)));
+      default: return saida({ erro: 'acao' });
+    }
+  } catch (x) { return saida({ erro: 'falha', mensagem: String((x && x.message) || x) }); }
+}
+
+function saida(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
+function comTrava(trava, f) { trava.waitLock(20000); try { return f(); } finally { trava.releaseLock(); } }
+function props() { return PropertiesService.getScriptProperties(); }
+function agora() { return Date.now(); }
+
+// ---------------------------------------------------------------- código do Google Authenticator (TOTP, RFC 6238)
+const B32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+function base32(bytes) {
+  let bits = 0; let val = 0; let s = '';
+  for (let i = 0; i < bytes.length; i++) { val = ((val << 8) | (bytes[i] & 255)) & 0xfff; bits += 8; while (bits >= 5) { s += B32[(val >>> (bits - 5)) & 31]; bits -= 5; } }
+  if (bits > 0) s += B32[(val << (5 - bits)) & 31];
+  return s;
+}
+function deBase32(s) {
+  s = String(s).replace(/[\s=-]/g, '').toUpperCase();
+  let bits = 0; let val = 0; const out = [];
+  for (let i = 0; i < s.length; i++) { const k = B32.indexOf(s[i]); if (k < 0) continue; val = ((val << 5) | k) & 0xfff; bits += 5; if (bits >= 8) { out.push((val >>> (bits - 8)) & 255); bits -= 8; } }
+  return out;
+}
+function comSinal(arr) { return arr.map(function (b) { b &= 255; return b > 127 ? b - 256 : b; }); }
+function hotp(chave, contador) {
+  const msg = []; let c = contador;
+  for (let i = 7; i >= 0; i--) { msg[i] = c % 256; c = Math.floor(c / 256); }
+  const mac = Utilities.computeHmacSignature(Utilities.MacAlgorithm.HMAC_SHA_1, comSinal(msg), comSinal(chave)).map(function (b) { return b & 255; });
+  const o = mac[mac.length - 1] & 15;
+  const n = ((mac[o] & 127) * 16777216) + (mac[o + 1] * 65536) + (mac[o + 2] * 256) + mac[o + 3];
+  return ('000000' + (n % 1000000)).slice(-6);
+}
+// Aceita a janela de 30 s atual e as vizinhas (relógio do celular uns segundos fora). Devolve a janela certa, ou -1.
+function confereCodigo(segredo, codigo, quando) {
+  if (!/^\d{6}$/.test(codigo)) return -1;
+  const chave = deBase32(segredo); const t = Math.floor((quando || agora()) / 30000);
+  const janelas = [t, t - 1, t + 1];
+  for (let i = 0; i < janelas.length; i++) if (hotp(chave, janelas[i]) === codigo) return janelas[i];
+  return -1;
+}
+function aleatorio(n) { // bytes aleatórios: UUIDs do Google misturados com SHA-256
+  let out = [];
+  while (out.length < n) out = out.concat(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, Utilities.getUuid() + Utilities.getUuid() + agora()).map(function (b) { return b & 255; }));
+  return out.slice(0, n);
+}
+function resumo(s) { return Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(s))); }
+
+// ---------------------------------------------------------------- configurar, entrar, travar
+function estado() {
+  const p = props(); const ate = Number(p.getProperty('trava_ate') || 0);
+  return { configurado: Boolean(p.getProperty('totp')), travado: ate > agora() ? ate : 0 };
+}
+function configurar() {
+  const p = props();
+  if (p.getProperty('totp')) return { erro: 'ja_configurado' };
+  const segredo = base32(aleatorio(20));
+  p.setProperty('totp_pendente', segredo);
+  return { segredo: segredo, otpauth: 'otpauth://totp/' + encodeURIComponent('Star-net.pro:Painel') + '?secret=' + segredo + '&issuer=' + encodeURIComponent('Star-net.pro') + '&algorithm=SHA1&digits=6&period=30' };
+}
+function confirmar(codigo, lembrar) {
+  const p = props();
+  if (p.getProperty('totp')) return { erro: 'ja_configurado' };
+  const pend = p.getProperty('totp_pendente');
+  if (!pend) return { erro: 'sem_configuracao' };
+  const bloqueio = travado(); if (bloqueio) return bloqueio;
+  const janela = confereCodigo(pend, codigo);
+  if (janela < 0) return registraErro();
+  p.setProperty('totp', pend); p.deleteProperty('totp_pendente'); p.setProperty('totp_ultimo', String(janela));
+  zeraErros();
+  return novaSessao(lembrar);
+}
+function entrar(codigo, lembrar) {
+  const p = props(); const segredo = p.getProperty('totp');
+  if (!segredo) return { erro: 'nao_configurado' };
+  const bloqueio = travado(); if (bloqueio) return bloqueio;
+  const janela = confereCodigo(segredo, codigo);
+  if (janela < 0) return registraErro();
+  if (janela <= Number(p.getProperty('totp_ultimo') || -1)) return { erro: 'codigo_usado' }; // o mesmo código não entra duas vezes
+  p.setProperty('totp_ultimo', String(janela));
+  zeraErros();
+  return novaSessao(lembrar);
+}
+function travado() { const ate = Number(props().getProperty('trava_ate') || 0); return ate > agora() ? { erro: 'travado', ate: ate } : null; }
+function zeraErros() { const p = props(); p.deleteProperty('erros_janela'); p.deleteProperty('erros_seguidos'); p.deleteProperty('trava_ate'); }
+function registraErro() {
+  const p = props(); const t = agora();
+  let j = JSON.parse(p.getProperty('erros_janela') || '{"n":0,"desde":0}');
+  if (t - j.desde > 15 * 60000) j = { n: 0, desde: t };
+  j.n += 1; p.setProperty('erros_janela', JSON.stringify(j));
+  const seguidos = Number(p.getProperty('erros_seguidos') || 0) + 1; p.setProperty('erros_seguidos', String(seguidos));
+  if (seguidos >= ERROS_SEGUIDOS) { const ate = t + 24 * 3600000; p.setProperty('trava_ate', String(ate)); avisaPorEmail(seguidos); return { erro: 'travado', ate: ate }; }
+  if (j.n >= ERROS_POR_JANELA) { const ate = t + 15 * 60000; p.setProperty('trava_ate', String(ate)); p.setProperty('erros_janela', JSON.stringify({ n: 0, desde: 0 })); return { erro: 'travado', ate: ate }; }
+  return { erro: 'codigo', restam: ERROS_POR_JANELA - j.n };
+}
+function avisaPorEmail(n) {
+  try {
+    MailApp.sendEmail(Session.getEffectiveUser().getEmail(), 'Painel Star-net: código errado ' + n + ' vezes',
+      'Alguém digitou o código do Google Authenticator errado ' + n + ' vezes seguidas no painel (star-net.pro/admin), que ficou travado por 24 horas.\n\nSe foi você, espere ou rode a função destravar() no editor do script. Se não foi, ninguém entra sem o código do seu celular.');
+  } catch (x) { /* sem permissão de e-mail: só trava */ }
+}
+
+// ---------------------------------------------------------------- sessões (cada aparelho que entrou)
+function sessoes() { const s = JSON.parse(props().getProperty('sessoes') || '{}'); const t = agora(); Object.keys(s).forEach(function (k) { if (s[k] < t) delete s[k]; }); return s; }
+function guardaSessoes(s) { const ks = Object.keys(s).sort(function (a, b) { return s[b] - s[a]; }).slice(0, 20); const o = {}; ks.forEach(function (k) { o[k] = s[k]; }); props().setProperty('sessoes', JSON.stringify(o)); }
+function novaSessao(lembrar) {
+  const ficha = Utilities.base64EncodeWebSafe(aleatorio(32)).replace(/=+$/, '');
+  const ate = agora() + (lembrar ? SESSAO_DIAS * 86400000 : SESSAO_HORAS * 3600000);
+  const s = sessoes(); s[resumo(ficha)] = ate; guardaSessoes(s);
+  return { sessao: ficha, expira: ate };
+}
+function sessaoValida(ficha) { if (typeof ficha !== 'string' || ficha.length < 30) return false; return (sessoes()[resumo(ficha)] || 0) > agora(); }
+function sair(ficha, todos) { if (todos) props().deleteProperty('sessoes'); else { const s = sessoes(); delete s[resumo(ficha)]; guardaSessoes(s); } return { ok: true }; }
+
+// ---------------------------------------------------------------- Google Drive: a pasta do painel e os arquivos dela
+function pasta() {
+  const p = props(); const id = p.getProperty('pasta_id');
+  if (id) { try { const f = DriveApp.getFolderById(id); if (!f.isTrashed()) return f; } catch (x) { /* foi apagada */ } }
+  const f = DriveApp.createFolder(PASTA); p.setProperty('pasta_id', f.getId()); return f;
+}
+function arquivoDados() { const id = props().getProperty('arquivo_id'); if (!id) return null; try { const f = DriveApp.getFileById(id); return f.isTrashed() ? null : f; } catch (x) { return null; } }
+function lerDados() { const f = arquivoDados(); return f ? JSON.parse(f.getBlob().getDataAsString('UTF-8')) : null; }
+function daPasta(f) { const id = pasta().getId(); const ps = f.getParents(); while (ps.hasNext()) if (ps.next().getId() === id) return true; return false; }
+function listar() { const d = lerDados(); return { dados: d, revisao: d ? Number(d.revisao || 0) : 0, pasta: pasta().getUrl() }; }
+function salvar(dados, revisao, remover) {
+  if (!dados || !Array.isArray(dados.projetos)) return { erro: 'dados' };
+  const atual = lerDados(); const rev = atual ? Number(atual.revisao || 0) : 0;
+  if (rev !== revisao) return { erro: 'conflito', revisao: rev };
+  dados.revisao = rev + 1;
+  dados.atualizado = Utilities.formatDate(new Date(), 'America/Sao_Paulo', 'yyyy-MM-dd');
+  const txt = JSON.stringify(dados, null, 2) + '\n';
+  const f = arquivoDados();
+  if (f) f.setContent(txt); else props().setProperty('arquivo_id', pasta().createFile(ARQUIVO, txt, 'application/json').getId());
+  (remover || []).forEach(function (id) { try { const x = DriveApp.getFileById(String(id)); if (daPasta(x)) x.setTrashed(true); } catch (y) { /* já não existia */ } });
+  return { ok: true, revisao: dados.revisao, atualizado: dados.atualizado };
+}
+function enviarPdf(req) {
+  const bytes = Utilities.base64Decode(String(req.base64 || ''));
+  if (!bytes.length) return { erro: 'arquivo' };
+  const nome = String(req.nome || 'arquivo.pdf').replace(/[\\/:*?"<>|]+/g, '-').slice(0, 140);
+  const f = pasta().createFile(Utilities.newBlob(bytes, 'application/pdf', nome));
+  return { id: f.getId(), tamanho: f.getSize() };
+}
+function baixarPdf(id) {
+  let f; try { f = DriveApp.getFileById(id); } catch (x) { return { erro: 'arquivo' }; }
+  if (f.isTrashed() || !daPasta(f)) return { erro: 'arquivo' }; // só os arquivos da pasta do painel
+  return { base64: Utilities.base64Encode(f.getBlob().getBytes()), nome: f.getName() };
+}
+
+// ---------------------------------------------------------------- rodar à mão, aqui no editor
+function resetarAutenticador() { const p = props(); ['totp', 'totp_pendente', 'totp_ultimo', 'sessoes'].forEach(function (k) { p.deleteProperty(k); }); zeraErros(); Logger.log('Pronto: abra o painel e configure o Google Authenticator de novo.'); }
+function destravar() { zeraErros(); Logger.log('Destravado.'); }
