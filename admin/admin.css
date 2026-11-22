@@ -39,7 +39,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .input,select.input,textarea.input{width:100%;min-height:46px;padding:10px 14px;border:1.5px solid var(--line);border-radius:12px;background:#fff;outline:none}
 textarea.input{resize:vertical;line-height:1.45}
 .input:focus{border-color:var(--blue-2)}
-.check{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px}
+.check{display:flex;align-items:center;gap:10px;min-height:44px;font-weight:600;font-size:15px}
 .check input{width:20px;height:20px;accent-color:var(--blue)}
 .err{margin:0;color:var(--danger);font-weight:600;font-size:14px;min-height:0}
 .err:empty{display:none}
@@ -49,9 +49,10 @@ details.help ol{margin:10px 0 2px;padding-left:20px;font-size:14px;color:var(--m
 details.help b{color:var(--ink)}
 
 /* topo e barra */
-.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;padding:12px max(16px,env(safe-area-inset-left));background:rgba(244,246,251,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;padding:12px max(16px,env(safe-area-inset-left));background:rgba(244,246,251,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
 .top .brand{margin-right:auto}
 .top .brand small{display:block;font:600 12px/1 'Inter',sans-serif;color:var(--faint);letter-spacing:0;margin-top:4px}
+@media (max-width:560px){.top .btn.sm{min-height:40px}}
 .wrap{max-width:1180px;margin:0 auto;padding:18px 16px 60px}
 .tools{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:14px}
 .tools .search{flex:1 1 240px}
@@ -128,9 +129,12 @@ body.has-drawer #toast{bottom:max(88px,calc(env(safe-area-inset-bottom) + 76px))
 
 /* código do Authenticator e QR Code */
 .input.code{font:700 30px/1 'Inter Tight','Inter',sans-serif;letter-spacing:.35em;text-align:center;min-height:60px;padding:8px 10px 8px 22px;font-variant-numeric:tabular-nums}
-.qrbox{display:grid;justify-items:center;gap:10px;padding:16px;border-radius:16px;background:var(--field)}
+.qrbox{display:grid;justify-items:center;gap:12px;padding:16px;border-radius:16px;background:var(--field)}
 .qrbox .qr{width:220px;height:220px;border-radius:12px;background:#fff;padding:6px}
-.secret{font:600 16px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.06em;color:var(--ink);text-align:center;word-break:normal;overflow-wrap:normal;user-select:all;max-width:260px}
+.secret{width:100%;max-width:300px;padding:10px 12px;border-radius:12px;background:#fff;border:1px solid var(--line);font:700 clamp(17px,4.5vw,20px)/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.04em;word-spacing:.2em;color:var(--ink);text-align:center;word-break:normal;overflow-wrap:normal;user-select:all}
+.qr-acts{display:flex;flex-wrap:wrap;gap:8px;width:100%;justify-content:center}
+.qr-acts .btn{flex:1 1 160px}
+.warnbox{margin:0;padding:12px 14px;border-radius:14px;background:#fff3e2;border:1px solid #f7d6a8;color:#7c2d12;font-size:14px;font-weight:600;line-height:1.45}
 .small{font-size:13px;margin:0}
 ol.steps{margin:0;padding-left:20px;display:grid;gap:10px;color:var(--muted);font-size:15px}
 ol.steps b{color:var(--ink)}

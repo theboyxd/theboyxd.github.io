@@ -17,6 +17,7 @@
  */
 const PASTA = 'Star-net · Painel';
 const ARQUIVO = 'projetos.json';
+const PENDENTE_MIN = 30;         // chave pendente vale por 30 minutos
 const SESSAO_DIAS = 30;          // "lembrar este aparelho"
 const SESSAO_HORAS = 12;         // sem lembrar
 const ERROS_POR_JANELA = 5;      // 5 códigos errados em 15 minutos: espera 15 minutos
@@ -76,13 +77,25 @@ function hotp(chave, contador) {
   const n = ((mac[o] & 127) * 16777216) + (mac[o + 1] * 65536) + (mac[o + 2] * 256) + mac[o + 3];
   return ('000000' + (n % 1000000)).slice(-6);
 }
+function iguais(a, b) {
+  a = String(a); b = String(b);
+  const n = Math.max(a.length, b.length);
+  let diff = a.length ^ b.length;
+  for (let i = 0; i < n; i++) {
+    diff |= (i < a.length ? a.charCodeAt(i) : 0) ^ (i < b.length ? b.charCodeAt(i) : 0);
+  }
+  return diff === 0;
+}
 // Aceita a janela de 30 s atual e as vizinhas (relógio do celular uns segundos fora). Devolve a janela certa, ou -1.
 function confereCodigo(segredo, codigo, quando) {
   if (!/^\d{6}$/.test(codigo)) return -1;
   const chave = deBase32(segredo); const t = Math.floor((quando || agora()) / 30000);
   const janelas = [t, t - 1, t + 1];
-  for (let i = 0; i < janelas.length; i++) if (hotp(chave, janelas[i]) === codigo) return janelas[i];
-  return -1;
+  let achou = null;
+  for (let i = 0; i < janelas.length; i++) {
+    if (iguais(hotp(chave, janelas[i]), codigo) && achou === null) achou = janelas[i];
+  }
+  return achou === null ? -1 : achou;
 }
 function aleatorio(n) { // bytes aleatórios: UUIDs do Google misturados com SHA-256
   let out = [];
@@ -90,6 +103,9 @@ function aleatorio(n) { // bytes aleatórios: UUIDs do Google misturados com SHA
   return out.slice(0, n);
 }
 function resumo(s) { return Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(s))); }
+function otpauthUrl(segredo) {
+  return 'otpauth://totp/' + encodeURIComponent('Star-net.pro:Painel') + '?secret=' + segredo + '&issuer=' + encodeURIComponent('Star-net.pro') + '&algorithm=SHA1&digits=6&period=30';
+}
 
 // ---------------------------------------------------------------- configurar, entrar, travar
 function estado() {
@@ -99,19 +115,32 @@ function estado() {
 function configurar() {
   const p = props();
   if (p.getProperty('totp')) return { erro: 'ja_configurado' };
+  const t = agora();
+  const pend = p.getProperty('totp_pendente');
+  const em = Number(p.getProperty('totp_pendente_em') || 0);
+  if (pend && em && (t - em) < PENDENTE_MIN * 60000) {
+    return { segredo: pend, otpauth: otpauthUrl(pend) };
+  }
   const segredo = base32(aleatorio(20));
   p.setProperty('totp_pendente', segredo);
-  return { segredo: segredo, otpauth: 'otpauth://totp/' + encodeURIComponent('Star-net.pro:Painel') + '?secret=' + segredo + '&issuer=' + encodeURIComponent('Star-net.pro') + '&algorithm=SHA1&digits=6&period=30' };
+  p.setProperty('totp_pendente_em', String(t));
+  return { segredo: segredo, otpauth: otpauthUrl(segredo) };
 }
 function confirmar(codigo, lembrar) {
   const p = props();
   if (p.getProperty('totp')) return { erro: 'ja_configurado' };
   const pend = p.getProperty('totp_pendente');
   if (!pend) return { erro: 'sem_configuracao' };
+  const em = Number(p.getProperty('totp_pendente_em') || 0);
+  if (!em || (agora() - em) >= PENDENTE_MIN * 60000) {
+    p.deleteProperty('totp_pendente');
+    p.deleteProperty('totp_pendente_em');
+    return { erro: 'configuracao_vencida' };
+  }
   const bloqueio = travado(); if (bloqueio) return bloqueio;
   const janela = confereCodigo(pend, codigo);
   if (janela < 0) return registraErro();
-  p.setProperty('totp', pend); p.deleteProperty('totp_pendente'); p.setProperty('totp_ultimo', String(janela));
+  p.setProperty('totp', pend); p.deleteProperty('totp_pendente'); p.deleteProperty('totp_pendente_em'); p.setProperty('totp_ultimo', String(janela));
   zeraErros();
   return novaSessao(lembrar);
 }
@@ -193,5 +222,5 @@ function baixarPdf(id) {
 }
 
 // ---------------------------------------------------------------- rodar à mão, aqui no editor
-function resetarAutenticador() { const p = props(); ['totp', 'totp_pendente', 'totp_ultimo', 'sessoes'].forEach(function (k) { p.deleteProperty(k); }); zeraErros(); Logger.log('Pronto: abra o painel e configure o Google Authenticator de novo.'); }
+function resetarAutenticador() { const p = props(); ['totp', 'totp_pendente', 'totp_pendente_em', 'totp_ultimo', 'sessoes'].forEach(function (k) { p.deleteProperty(k); }); zeraErros(); Logger.log('Pronto: abra o painel e configure o Google Authenticator de novo.'); }
 function destravar() { zeraErros(); Logger.log('Destravado.'); }

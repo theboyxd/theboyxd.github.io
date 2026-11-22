@@ -2,7 +2,7 @@
 // Página estática. O login é o código de 6 dígitos do Google Authenticator, conferido pelo "servidor do painel":
 // um Google Apps Script na sua conta Google, que também guarda os projetos e os PDFs numa pasta do seu Google Drive.
 // Esta página não guarda dados nem segredos; ela só conversa com o servidor do painel.
-const SERVIDOR = ''; // URL do app da Web do Apps Script (termina em /exec). Não é segredo: sem o código do celular ninguém entra.
+const SERVIDOR = ''; // Vazio de propósito: o endereço do servidor (Apps Script, termina em /exec) NÃO vai para o repositório público, senão qualquer pessoa poderia errar o código para travar o painel. Cada aparelho guarda o seu (veja "Conectar outro aparelho").
 const LOCAL = ['127.0.0.1', 'localhost'].includes(location.hostname);
 const QS = new URLSearchParams(location.search);
 const MAX_PDF = 30 * 1024 * 1024;
@@ -293,8 +293,20 @@ function brand(sub) {
   return h('div', { class: 'brand' }, h('img', { src: 'simbolo.png', alt: '', width: 34, height: 43 }),
     h('div', {}, h('b', {}, 'Star-net', h('em', { text: '.pro' })), sub ? h('small', { text: sub }) : null));
 }
-function codeInput() {
-  return h('input', { class: 'input code', type: 'text', inputmode: 'numeric', autocomplete: 'one-time-code', pattern: '[0-9]{6}', maxlength: 6, placeholder: '000000', 'aria-label': 'Código de 6 dígitos', oninput: (ev) => { ev.target.value = ev.target.value.replace(/\D/g, '').slice(0, 6); } });
+function codeInput(onFull) {
+  return h('input', {
+    class: 'input code', type: 'text', inputmode: 'numeric', autocomplete: 'one-time-code', enterkeyhint: 'go',
+    pattern: '[0-9]{6}', maxlength: 6, placeholder: '000000', 'aria-label': 'Código de 6 dígitos',
+    oninput: (ev) => {
+      const v = ev.target.value.replace(/\D/g, '').slice(0, 6);
+      ev.target.value = v;
+      if (v.length === 6 && onFull) onFull();
+    }
+  });
+}
+
+function urlServidorValida(v) {
+  return /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(v) || (LOCAL && /^http:\/\/127\.0\.0\.1:\d+\//.test(v));
 }
 
 // Primeira vez: instalar o servidor do painel (Apps Script) e colar o URL dele aqui.
@@ -310,7 +322,7 @@ function setupView(msg = '') {
   const form = h('form', { class: 'login', onsubmit: async (ev) => {
     ev.preventDefault(); err.textContent = '';
     const v = url.value.trim();
-    if (!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(v) && !(LOCAL && /^http:\/\/127\.0\.0\.1:\d+\//.test(v))) { err.textContent = 'Cole o URL do app da Web inteiro: começa com https://script.google.com/macros/s/ e termina em /exec.'; return; }
+    if (!urlServidorValida(v)) { err.textContent = 'Cole o URL do app da Web inteiro: começa com https://script.google.com/macros/s/ e termina em /exec.'; return; }
     store.set(K_SERVIDOR, v); btn.disabled = true; btn.textContent = 'Conectando…';
     try { await start(); } catch (e) { btn.disabled = false; btn.textContent = 'Conectar'; err.textContent = e.message; }
   } },
@@ -325,8 +337,8 @@ function setupView(msg = '') {
   $app.replaceChildren(h('main', { class: 'center' }, form));
 }
 
-// O servidor ainda não tem o Google Authenticator: mostra o QR Code e confere o primeiro código.
-async function authenticatorView() {
+// O servidor ainda não tem o Google Authenticator: mostra o QR Code, a chave e confere o primeiro código.
+async function authenticatorView(msg = '') {
   closeDrawer();
   busy('Gerando o QR Code…');
   let r;
@@ -336,38 +348,69 @@ async function authenticatorView() {
   if (!r.otpauth) { setupView('O servidor não gerou o QR Code (' + (r.erro || 'sem resposta') + ').'); return; }
   const img = h('img', { class: 'qr', alt: 'QR Code para o Google Authenticator', width: 220, height: 220 });
   try { img.src = await window.QRLib.toDataURL(r.otpauth, { margin: 1, width: 440, color: { dark: '#0b1f4b', light: '#ffffff' } }); } catch (e) { img.alt = 'Não consegui desenhar o QR Code: use a chave abaixo.'; }
-  const code = codeInput(); const lembrar = h('input', { type: 'checkbox', checked: true });
-  const err = h('p', { class: 'err', role: 'alert' });
+  const rawSecret = String(r.segredo || '').replace(/\s+/g, '');
+  const secretEl = h('code', { class: 'secret', text: rawSecret.replace(/(.{4})/g, '$1 ').trim() });
+  const copyKeyBtn = h('button', {
+    class: 'btn',
+    type: 'button',
+    onclick: async () => {
+      try {
+        await navigator.clipboard.writeText(rawSecret);
+        toast('Chave copiada.', 'ok');
+      } catch (e) {
+        const sel = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(secretEl);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        toast('Não consegui copiar sozinho. A chave foi selecionada: copie manualmente.', 'info', 5000);
+      }
+    }
+  }, 'Copiar chave');
+  const openAppLink = h('a', { class: 'btn', href: r.otpauth, text: 'Abrir no app do celular' });
+  const lembrar = h('input', { type: 'checkbox', checked: true });
+  const err = h('p', { class: 'err', role: 'alert', text: msg });
   const btn = h('button', { class: 'btn primary', type: 'submit', text: 'Confirmar' });
-  const form = h('form', { class: 'login', onsubmit: async (ev) => {
-    ev.preventDefault(); err.textContent = '';
+  let busySub = false;
+  async function enviar() {
+    if (busySub) return;
+    err.textContent = '';
     if (!/^\d{6}$/.test(code.value)) { err.textContent = 'Digite os 6 números que aparecem no Authenticator.'; return; }
-    btn.disabled = true; btn.textContent = 'Conferindo…';
-    try { const x = await call('confirmar', { codigo: code.value, lembrar: lembrar.checked }); if (x.sessao) { guardaSessao(x, lembrar.checked); toast('Google Authenticator ligado.', 'ok'); await openPanel(); return; } err.textContent = msgCodigo(x); }
-    catch (e) { err.textContent = e.message; }
-    btn.disabled = false; btn.textContent = 'Confirmar'; code.value = ''; code.focus();
-  } },
-  brand(), h('h1', { text: 'Ligar o Google Authenticator' }),
-  h('ol', { class: 'steps' },
-    h('li', {}, 'No celular, abra o ', h('b', { text: 'Google Authenticator' }), ' (ou o Authy), toque em ', h('b', { text: '+' }), ' e em ', h('b', { text: 'Ler código QR' }), '.'),
-    h('li', {}, 'Aponte para o QR Code abaixo. Se não der, escolha ', h('b', { text: 'Inserir chave' }), ' e digite a chave.'),
-    h('li', {}, 'Digite o código de 6 números que apareceu.')),
-  h('div', { class: 'qrbox' }, img, h('code', { class: 'secret', text: r.segredo.replace(/(.{4})/g, '$1 ').trim() })),
-  h('label', { class: 'field' }, h('span', { text: 'Código do Authenticator' }), code),
-  h('label', { class: 'check' }, lembrar, 'Lembrar este aparelho por 30 dias'), err, btn);
+    busySub = true; btn.disabled = true; btn.textContent = 'Conferindo…';
+    try {
+      const x = await call('confirmar', { codigo: code.value, lembrar: lembrar.checked });
+      if (x.sessao) { guardaSessao(x, lembrar.checked); toast('Google Authenticator ligado.', 'ok'); await openPanel(); return; }
+      if (x.erro === 'configuracao_vencida') { await authenticatorView('A chave venceu. Leia o QR de novo.'); return; }
+      if (x.erro === 'ja_configurado') { loginView(); return; }
+      err.textContent = msgCodigo(x);
+    } catch (e) { err.textContent = e.message; }
+    busySub = false; btn.disabled = false; btn.textContent = 'Confirmar'; code.value = ''; code.focus();
+  }
+  const code = codeInput(enviar);
+  const form = h('form', { class: 'login', onsubmit: (ev) => { ev.preventDefault(); enviar(); } },
+    brand(), h('h1', { text: 'Ligar o Google Authenticator' }),
+    h('ol', { class: 'steps' },
+      h('li', {}, h('b', { text: 'No celular:' }), ' Copiar chave → abra o ', h('b', { text: 'Google Authenticator' }), ' → ', h('b', { text: '+' }), ' → ', h('b', { text: 'Inserir chave' }), ' → cole.'),
+      h('li', {}, h('b', { text: 'No computador:' }), ' aponte o celular para o QR.'),
+      h('li', {}, 'Digite o código de 6 números que apareceu.')),
+    h('div', { class: 'qrbox' }, img, secretEl, h('div', { class: 'qr-acts' }, copyKeyBtn, openAppLink)),
+    h('label', { class: 'field' }, h('span', { text: 'Código do Authenticator' }), code),
+    h('label', { class: 'check' }, lembrar, 'Lembrar este aparelho por 30 dias'), err, btn);
   $app.replaceChildren(h('main', { class: 'center' }, form));
   code.focus();
 }
 
 function loginView(msg = '', info = false) {
   closeDrawer();
-  const code = codeInput(); const lembrar = h('input', { type: 'checkbox', checked: true });
+  const lembrar = h('input', { type: 'checkbox', checked: true });
   const err = h('p', { class: info ? 'err info' : 'err', role: 'alert', text: msg });
   const btn = h('button', { class: 'btn primary', type: 'submit', text: 'Entrar' });
-  const form = h('form', { class: 'login', onsubmit: async (ev) => {
-    ev.preventDefault(); err.textContent = '';
+  let busySub = false;
+  async function enviar() {
+    if (busySub) return;
+    err.textContent = '';
     if (!/^\d{6}$/.test(code.value)) { err.textContent = 'Digite os 6 números que aparecem no Authenticator.'; return; }
-    btn.disabled = true; btn.textContent = 'Entrando…';
+    busySub = true; btn.disabled = true; btn.textContent = 'Entrando…';
     err.className = 'err';
     try {
       const r = await call('entrar', { codigo: code.value, lembrar: lembrar.checked });
@@ -375,13 +418,15 @@ function loginView(msg = '', info = false) {
       if (r.erro === 'nao_configurado') { authenticatorView(); return; }
       err.textContent = msgCodigo(r);
     } catch (e) { err.textContent = e.message; }
-    btn.disabled = false; btn.textContent = 'Entrar'; code.value = ''; code.focus();
-  } },
-  brand(), h('h1', { text: 'Painel de projetos' }),
-  h('p', { class: 'muted', text: 'Abra o Google Authenticator no celular e digite o código de 6 números da Star-net.pro.' }),
-  h('label', { class: 'field' }, h('span', { text: 'Código do Authenticator' }), code),
-  h('label', { class: 'check' }, lembrar, 'Lembrar este aparelho por 30 dias'), err, btn,
-  h('p', { class: 'small muted', text: 'Errou 5 vezes, o painel espera 15 minutos. Os projetos e os PDFs ficam no seu Google Drive.' }));
+    busySub = false; btn.disabled = false; btn.textContent = 'Entrar'; code.value = ''; code.focus();
+  }
+  const code = codeInput(enviar);
+  const form = h('form', { class: 'login', onsubmit: (ev) => { ev.preventDefault(); enviar(); } },
+    brand(), h('h1', { text: 'Painel de projetos' }),
+    h('p', { class: 'muted', text: 'Abra o Google Authenticator no celular e digite o código de 6 números da Star-net.pro.' }),
+    h('label', { class: 'field' }, h('span', { text: 'Código do Authenticator' }), code),
+    h('label', { class: 'check' }, lembrar, 'Lembrar este aparelho por 30 dias'), err, btn,
+    h('p', { class: 'small muted', text: 'Errou 5 vezes, o painel espera 15 minutos. Os projetos e os PDFs ficam no seu Google Drive.' }));
   $app.replaceChildren(h('main', { class: 'center' }, form));
   code.focus();
 }
@@ -458,12 +503,46 @@ function appView() {
   $app.replaceChildren(
     h('header', { class: 'top' }, brand('Painel de projetos'),
       h('button', { class: 'btn ghost icon-btn', type: 'button', title: 'Recarregar', 'aria-label': 'Recarregar', onclick: async () => { busy('Recarregando…'); try { await loadData(); idle(); if (data) { appView(); toast('Atualizado.', 'ok', 1500); } else emptyView(); } catch (e) { fail(e); } } }, ic('sync')),
+      h('button', { class: 'btn ghost sm', type: 'button', onclick: connectDrawer }, ic('phone'), 'Conectar outro aparelho'),
       h('button', { class: 'btn ghost sm', type: 'button', onclick: sairView }, ic('out'), 'Sair')),
     h('main', { class: 'wrap' },
       h('div', { class: 'tools' }, search, h('button', { class: 'btn primary', type: 'button', onclick: () => editDrawer(null) }, ic('plus'), 'Novo projeto')),
       chips, grid,
       h('p', { class: 'foot' }, 'Dados no seu Google Drive, pasta ', pastaUrl ? h('a', { href: pastaUrl, target: '_blank', rel: 'noopener noreferrer', text: 'Star-net · Painel' }) : 'Star-net · Painel', data.atualizado ? ' · atualizado em ' + dataBR(data.atualizado) : '', '.')));
   renderGrid();
+}
+
+async function connectDrawer() {
+  const srv = servidor();
+  const link = location.origin + '/admin/#s=' + encodeURIComponent(srv);
+  const img = h('img', { class: 'qr', alt: 'QR Code com o link privado do painel', width: 220, height: 220 });
+  try { img.src = await window.QRLib.toDataURL(link, { margin: 1, width: 440, color: { dark: '#0b1f4b', light: '#ffffff' } }); }
+  catch (e) { img.alt = 'Não consegui desenhar o QR Code: copie o link abaixo.'; }
+  const inp = h('input', { class: 'input', type: 'text', readonly: true, value: link, 'aria-label': 'Link privado do painel', onclick: () => inp.select(), onfocus: () => inp.select() });
+  const copyBtn = h('button', {
+    class: 'btn primary',
+    type: 'button',
+    onclick: async () => {
+      try {
+        await navigator.clipboard.writeText(link);
+        toast('Link privado copiado.', 'ok');
+      } catch (e) {
+        inp.focus(); inp.select();
+        toast('Não consegui copiar sozinho. O link está selecionado: copie manualmente.', 'info', 5000);
+      }
+    }
+  }, 'Copiar link');
+  openDrawer('ap-title',
+    h('header', {}, h('div', { class: 'tt' }, h('h2', { id: 'ap-title', text: 'Conectar outro aparelho' })),
+      h('button', { class: 'btn ghost icon-btn', type: 'button', 'aria-label': 'Fechar', onclick: closeDrawer }, ic('x'))),
+    [
+      h('p', { class: 'lead muted', text: 'Leia o QR Code com a câmera do outro aparelho ou abra o link privado abaixo. Depois, entre com o código do Google Authenticator.' }),
+      h('div', { class: 'qrbox' }, img),
+      h('label', { class: 'field' }, h('span', { text: 'Link privado' }), inp),
+      h('div', { class: 'qr-acts' }, copyBtn),
+      h('p', { class: 'warnbox', text: 'Não compartilhe este link. Sem o código do seu celular ninguém entra, mas quem tem o link pode travar o painel errando o código.' }),
+    ],
+    h('footer', {}, h('span', { class: 'sp' }), h('button', { class: 'btn', type: 'button', onclick: closeDrawer }, 'Fechar')));
 }
 
 function sairView() {
@@ -623,6 +702,20 @@ function editDrawer(orig) {
 // ---------------------------------------------------------------- início
 async function start() {
   if (window.top !== window.self) { $app.replaceChildren(h('main', { class: 'center' }, h('p', { class: 'muted', text: 'Abra o painel direto em star-net.pro/admin.' }))); return; } // não roda dentro de outro site
+  if (location.hash && location.hash !== '#') {
+    const raw = location.hash;
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* ok */ }
+    let u = '';
+    if (raw.startsWith('#s=')) {
+      try { u = decodeURIComponent(raw.slice(3)).trim(); } catch (e) { u = ''; }
+    }
+    if (!urlServidorValida(u)) { setupView('Esse link não é de um servidor do painel.'); return; }
+    const prev = store.get(K_SERVIDOR);
+    if (!prev || prev === u || confirm('Este link troca o servidor do painel deste aparelho por outro.\n\nSó continue se foi você que gerou o link no painel.\n\nOK: trocar. Cancelar: manter o atual.')) {
+      if (prev && prev !== u) store.del(K_SESSAO);
+      store.set(K_SERVIDOR, u);
+    }
+  }
   if (!servidor()) { setupView(); return; }
   sessao = lerSessao();
   if (sessao) { await openPanel(); return; }
