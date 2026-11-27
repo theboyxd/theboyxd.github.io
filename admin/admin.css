@@ -341,7 +341,7 @@ body.em-app{overflow:hidden}
   .cx-top .cx-brand{padding:0;margin-right:auto}
   .cx-top .btn{color:#c5d0ec}
   .cx-top .btn:hover{background:rgba(255,255,255,.08);color:#fff}
-  .cx-tabs{position:fixed;left:0;right:0;bottom:0;z-index:15;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));padding:4px 2px max(4px,env(safe-area-inset-bottom));background:rgba(255,255,255,.97);border-top:1px solid var(--line);backdrop-filter:blur(10px)}
+  .cx-tabs{position:fixed;left:0;right:0;bottom:0;z-index:15;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));padding:4px 2px max(4px,env(safe-area-inset-bottom));background:rgba(255,255,255,.97);border-top:1px solid var(--line);backdrop-filter:blur(10px)}
   .tb{display:grid;justify-items:center;align-content:center;gap:4px;min-height:54px;padding:4px 0;border:0;border-radius:12px;background:none;color:#5d6b8f;font:600 11px/1 'Inter',sans-serif;cursor:pointer}
   .tb svg{width:23px;height:23px}
   .tb.on{color:var(--blue)}

@@ -519,10 +519,10 @@ function quando(iso) { // os apps gravam a hora de Brasília sem fuso → "hoje 
 }
 const dataCurta = (iso) => (iso ? new Date(iso + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' }) : '');
 
-// Os apps. vps = protegido na VPS (abre com passe de uso único). Os outros abrem direto, dentro da Central.
+// Os apps. amazon e radar moram na Central (telas em apps/, ver MODS); os outros abrem numa moldura, dentro da Central.
 const APPS_C = {
-  amazon: { nome: 'Painel Amazon', sub: 'Dropshipping: Amazon e Shopee', ic: 'box', tom: 't-amber', vps: 'amazon', url: 'https://amazon.star-net.pro/' },
-  radar: { nome: 'Radar de Clientes', sub: 'Acha negócios para você vender', ic: 'radar', tom: 't-teal', vps: 'radar', url: 'https://radar.star-net.pro/' },
+  amazon: { nome: 'Painel Amazon', sub: 'Dropshipping: Amazon e Shopee', ic: 'box', tom: 't-amber' },
+  radar: { nome: 'Radar de Clientes', sub: 'Acha negócios para você vender', ic: 'radar', tom: 't-teal' },
   dads: { nome: 'Dad’s Burger', sub: 'Restaurante · cliente', ic: 'burger', tom: 't-red', url: 'https://dadsburguer.site/' },
   cardapio: { nome: 'Cardápio 3D', sub: 'Restaurante · demonstração', ic: 'cube', tom: 't-blue', url: 'https://star-net.pro/m/demo' },
   imob: { nome: 'PropPulse', sub: 'Imobiliária · demonstração', ic: 'building', tom: 't-sky', url: 'https://star-net.pro/imobiliaria/' },
@@ -531,7 +531,6 @@ const APPS_C = {
 const STATUS_DE = { amazon: 'amazon', radar: 'radar', dads: 'dads', cardapio: 'site', imob: 'site', site: 'site' };
 const DADS_ADMIN = 'https://dadsburguer.site/admin';
 const DADS_SECOES = [['kanban', 'Pedidos'], ['catalog', 'Cardápio, estoque e 3D'], ['delivery', 'Entregas'], ['hours', 'Horários'], ['finance', 'Financeiro']];
-const AMAZON_TELAS = [['/', 'Visão geral'], ['/produtos', 'Produtos'], ['/vendas', 'Vendas'], ['/logistica', 'Logística'], ['/garimpo', 'Garimpo'], ['/config', 'Configurações']];
 const NOME_TAREFA = { listings: 'Anúncios', stock: 'Estoque', orders: 'Pedidos', fees: 'Taxas', buybox: 'Buy Box' };
 
 function selo(a, grande) { return h('span', { class: 'selo ' + a.tom + (grande ? ' g' : '') }, ic(a.ic)); }
@@ -565,8 +564,22 @@ async function pegaPratos() {
 }
 
 // ---- casca: menu lateral (computador), barra de baixo (celular) e a área onde os apps abrem
-const NAV = [['inicio', 'Hoje', 'home', 'Hoje'], ['dropshipping', 'Dropshipping', 'cart', 'Dropship'], ['apps', 'Apps que vendo', 'grid', 'Apps'],
-  ['visitas', 'Visitas', 'store', 'Visitas'], ['projetos', 'Clientes e projetos', 'folder', 'Projetos']];
+const NAV = [['inicio', 'Hoje', 'home', 'Hoje'], ['amazon', 'Dropshipping', 'cart', 'Dropship'], ['radar', 'Radar de clientes', 'radar', 'Radar'],
+  ['apps', 'Apps que vendo', 'grid', 'Apps'], ['visitas', 'Visitas', 'store', 'Visitas'], ['projetos', 'Clientes e projetos', 'folder', 'Projetos']];
+// Apps que moram na Central: as telas vêm de apps/<id>.js (montadas de Star-net/star-net-central) e falam com o app
+// pela ponte (ação "app" do servidor do painel). Endereços: #/amazon/produtos, #/radar/clientes…
+const VERSAO = new URL(import.meta.url).searchParams.get('v') || '';
+const MODS = { amazon: { arquivo: 'apps/amazon.js', nome: 'Dropshipping' }, radar: { arquivo: 'apps/radar.js', nome: 'Radar de clientes' } };
+const MOD_P = {}; let MOD_ATUAL = ''; let ALERTAS_EM = 0;
+function modulo(id) {
+  if (!MOD_P[id]) MOD_P[id] = import('./' + MODS[id].arquivo + (VERSAO ? '?v=' + VERSAO : '')).catch((e) => { delete MOD_P[id]; throw e; });
+  return MOD_P[id];
+}
+function icApp(name) { // ícones das telas dos apps (apps/icones.svg)
+  const NS = 'http://www.w3.org/2000/svg', s = document.createElementNS(NS, 'svg'), u = document.createElementNS(NS, 'use');
+  s.setAttribute('class', 'i'); s.setAttribute('aria-hidden', 'true'); u.setAttribute('href', 'apps/icones.svg#' + name); s.append(u);
+  return s;
+}
 let SH = null; let ROTA = 'inicio'; let VOLTAR = 'inicio';
 const ABERTOS = new Map(); // id do app → { frame, a }
 const VISTAS = {};
@@ -578,8 +591,15 @@ function casca() {
     h('div', {}, h('b', {}, 'Star-net', h('em', { text: '.pro' })), h('small', { text: 'Central' })));
   const abertos = h('div', { class: 'nv-abertos' });
   const boxAbertos = h('div', { class: 'cx-abertos', hidden: true }, h('small', { class: 'cx-lab', text: 'Abertos agora' }), abertos);
+  const subs = {};
+  const itens = NAV.map(([id, t, icone]) => {
+    const b = h('button', { type: 'button', class: 'nv', 'data-r': id, onclick: () => ir(id, true) }, ic(icone), h('span', { text: t }));
+    if (!MODS[id]) return b;
+    subs[id] = h('div', { class: 'nv-sub', hidden: true, 'data-sub': id });
+    return [b, subs[id]];
+  });
   const side = h('aside', { class: 'cx-side' }, marca(),
-    h('nav', { class: 'cx-nav', 'aria-label': 'Seções' }, NAV.map(([id, t, icone]) => h('button', { type: 'button', class: 'nv', 'data-r': id, onclick: () => ir(id) }, ic(icone), h('span', { text: t })))),
+    h('nav', { class: 'cx-nav', 'aria-label': 'Seções' }, itens),
     boxAbertos,
     h('div', { class: 'cx-foot' },
       h('button', { type: 'button', class: 'nv', onclick: connectDrawer }, ic('phone'), h('span', { text: 'Conectar aparelho' })),
@@ -591,50 +611,129 @@ function casca() {
   const wsBar = h('header', { class: 'ws-bar' });
   const frames = h('div', { class: 'ws-frames' });
   const trabalho = h('section', { class: 'cx-work', hidden: true, 'aria-label': 'App aberto' }, wsBar, frames);
-  const abas = h('nav', { class: 'cx-tabs', 'aria-label': 'Seções' }, NAV.map(([id, , icone, curto]) => h('button', { type: 'button', class: 'tb', 'data-r': id, onclick: () => ir(id) }, ic(icone), h('span', { text: curto }))));
+  const abas = h('nav', { class: 'cx-tabs', 'aria-label': 'Seções' }, NAV.map(([id, , icone, curto]) => h('button', { type: 'button', class: 'tb', 'data-r': id, onclick: () => ir(id, true) }, ic(icone), h('span', { text: curto }))));
   const raiz = h('div', { class: 'cx' }, side, h('div', { class: 'cx-main' }, topo, vista, trabalho), abas);
   $app.replaceChildren(raiz);
-  SH = { raiz, vista, trabalho, frames, wsBar, abertos, boxAbertos };
+  SH = { raiz, vista, trabalho, frames, wsBar, abertos, boxAbertos, subs };
   return SH;
 }
+const secaoDe = (rota) => (rota.startsWith('app:') ? '' : rota.split(':')[0]);
 function marcaNav() {
+  const sec = secaoDe(ROTA);
   for (const b of SH.raiz.querySelectorAll('[data-r]')) {
-    const on = b.dataset.r === ROTA; b.classList.toggle('on', on);
+    const on = b.dataset.r === sec; b.classList.toggle('on', on);
     if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   }
   for (const b of SH.abertos.querySelectorAll('[data-app]')) b.classList.toggle('on', ROTA === 'app:' + b.dataset.app);
+  for (const [id, box] of Object.entries(SH.subs)) box.hidden = sec !== id || !box.childElementCount;
 }
-function ir(r) {
+// "amazon/produtos?x=1" → { secao: 'amazon', caminho: '/produtos?x=1' }; "app/dads" → { secao: 'app', app: 'dads' }
+function analisa(r) {
+  const m = /^([a-z]+)([/?].*)?$/.exec(String(r || ''));
+  if (!m) return { secao: 'inicio' };
+  let secao = m[1]; const resto = m[2] || '';
+  if (secao === 'dropshipping') return { secao: 'amazon', caminho: '/' };
+  if (secao === 'app') {
+    const id = resto.replace(/^\//, '').split(/[/?]/)[0];
+    if (MODS[id]) return { secao: id, caminho: '/' };
+    return APPS_C[id] ? { secao: 'app', app: id } : { secao: 'inicio' };
+  }
+  if (MODS[secao]) return { secao, caminho: resto.startsWith('?') ? '/' + resto : (resto || '/') };
+  if (!VISTAS[secao]) secao = 'inicio';
+  return { secao };
+}
+function ir(r, empurra) {
   const s = casca();
-  if (!r.startsWith('app:') && !VISTAS[r]) r = 'inicio';
-  ROTA = r;
-  const alvo = '#/' + r.replace(':', '/');
-  if (location.hash !== alvo) { try { history.replaceState(null, '', alvo); } catch (e) { /* ok */ } }
-  const app = r.startsWith('app:') ? r.slice(4) : '';
+  const a = String(r).startsWith('app:') ? analisa('app/' + String(r).slice(4)) : analisa(r);
+  const alvo = a.secao === 'app' ? '#/app/' + a.app : MODS[a.secao] ? '#/' + a.secao + (a.caminho === '/' ? '' : a.caminho) : '#/' + a.secao;
+  if (location.hash !== alvo) { try { history[empurra ? 'pushState' : 'replaceState'](null, '', alvo); } catch (e) { /* ok */ } }
+  if (MOD_ATUAL && a.secao !== MOD_ATUAL) { const id = MOD_ATUAL; MOD_ATUAL = ''; modulo(id).then((m) => m.sai()).catch(() => {}); } // saiu do app
+  ROTA = a.secao === 'app' ? 'app:' + a.app : MODS[a.secao] ? a.secao + ':' + a.caminho : a.secao;
+  const app = a.secao === 'app' ? a.app : '';
   s.vista.hidden = Boolean(app); s.trabalho.hidden = !app;
   document.body.classList.toggle('em-app', Boolean(app));
   marcaNav();
   if (app) { mostraApp(app); return; }
-  VOLTAR = r;
+  VOLTAR = alvo.slice(2);
   closeDrawer();
-  VISTAS[r](s.vista);
+  if (MODS[a.secao]) mostraModulo(a.secao, a.caminho);
+  else VISTAS[a.secao](s.vista);
   window.scrollTo(0, 0);
 }
-function rotaDoEndereco() {
-  const m = /^#\/([a-z]+)(?:\/([a-z]+))?$/.exec(location.hash || '');
-  if (!m) return 'inicio';
-  if (m[1] === 'app') return APPS_C[m[2]] ? 'app:' + m[2] : 'inicio';
-  return VISTAS[m[1]] ? m[1] : 'inicio';
-}
+const rotaDoEndereco = () => (location.hash || '').replace(/^#\/?/, '') || 'inicio';
 // chamado depois de salvar ou apagar um projeto: redesenha a tela atual
 function appView() {
-  if (!SH || !SH.raiz.isConnected) { ir(ROTA); return; }
-  if (!ROTA.startsWith('app:')) VISTAS[ROTA](SH.vista);
+  if (!SH || !SH.raiz.isConnected) { ir(VOLTAR || 'inicio'); return; }
+  if (VISTAS[ROTA]) VISTAS[ROTA](SH.vista);
+}
+// links dentro das telas dos apps (#/amazon/garimpo/12) e o "voltar" do navegador
+window.addEventListener('hashchange', () => { if (SH && SH.raiz.isConnected && sessao) ir(rotaDoEndereco()); });
+
+// ---- apps que moram na Central (Painel Amazon e Radar)
+function menuDe(mod, caminho) {
+  const p = String(caminho || '/').split('?')[0].replace(/\/+$/, '') || '/';
+  const hit = mod.MENU.find((m) => (m.caminho === '/' ? p === '/' : p === m.caminho || p.startsWith(m.caminho + '/')));
+  return hit ? hit.caminho : '/';
+}
+function desenhaSub(id, mod, barra) {
+  const box = SH.subs[id];
+  const botao = (m, curto) => h('button', { type: 'button', class: curto ? '' : 'nv', 'data-c': m.caminho, onclick: () => ir(id + (m.caminho === '/' ? '' : m.caminho), true) },
+    icApp(m.ic), h('span', { text: m.nome }), m.caminho === '/logistica' ? h('span', { class: 'ct', hidden: true }) : null);
+  if (box && !box.childElementCount) {
+    let grupo = ''; const itens = [];
+    for (const m of mod.MENU) {
+      if (m.grupo && m.grupo !== grupo) { grupo = m.grupo; itens.push(h('small', { text: grupo })); }
+      itens.push(botao(m, false));
+    }
+    if (mod.novaVenda) itens.push(h('button', { type: 'button', class: 'nv nv-acao', onclick: () => mod.novaVenda() }, icApp('plus'), h('span', { text: 'Registrar venda' })));
+    box.replaceChildren(...itens);
+  }
+  if (barra && !barra.childElementCount) {
+    barra.replaceChildren(...mod.MENU.map((m) => botao(m, true)),
+      ...(mod.novaVenda ? [h('button', { type: 'button', class: 'acao', onclick: () => mod.novaVenda() }, icApp('plus'), h('span', { text: 'Venda' }))] : []));
+  }
+  marcaNav();
+}
+function marcaSub(id, caminho) {
+  for (const el of SH.raiz.querySelectorAll('[data-sub="' + id + '"] [data-c], .jx-pg[data-mod="' + id + '"] .jx-sub [data-c]')) {
+    const on = el.dataset.c === caminho; el.classList.toggle('on', on);
+    if (on) { el.setAttribute('aria-current', 'page'); if (el.parentElement.classList.contains('jx-sub')) el.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } else el.removeAttribute('aria-current');
+  }
+}
+function atualizaAlertas(mod, forcar) { // o número vermelho em "Logística e estoque" = produtos para repor agora
+  if (!mod.alertas || (!forcar && Date.now() - ALERTAS_EM < 60000)) return;
+  ALERTAS_EM = Date.now();
+  mod.alertas().then((n) => {
+    for (const el of SH.raiz.querySelectorAll('[data-c="/logistica"] .ct')) { el.hidden = !n; el.textContent = n; el.title = n + (n === 1 ? ' produto para repor' : ' produtos para repor'); }
+  }).catch(() => { ALERTAS_EM = 0; });
+}
+async function mostraModulo(id, caminho) {
+  const s = casca(), minha = ROTA;
+  let quadro = s.vista.firstElementChild;
+  if (!quadro || quadro.dataset.mod !== id) {
+    quadro = h('div', { class: 'pg jx-pg', 'data-mod': id }, h('nav', { class: 'jx-sub', 'aria-label': MODS[id].nome }),
+      h('div', { class: 'jx jx-raiz' }, h('div', { class: 'jx-carrega' }, carregando(MODS[id].nome))));
+    s.vista.replaceChildren(quadro);
+  }
+  const raiz = quadro.querySelector('.jx-raiz');
+  let mod;
+  try { mod = await modulo(id); } catch (e) {
+    if (ROTA === minha) raiz.replaceChildren(erroCard('Não consegui carregar as telas. Confira a internet e tente de novo.', () => mostraModulo(id, caminho)));
+    return;
+  }
+  if (ROTA !== minha) return;
+  MOD_ATUAL = id;
+  desenhaSub(id, mod, quadro.querySelector('.jx-sub'));
+  marcaSub(id, menuDe(mod, caminho));
+  const marcado = await mod.mostra(raiz, caminho);
+  if (ROTA === minha) marcaSub(id, marcado);
+  atualizaAlertas(mod);
 }
 
-// ---- área de trabalho: os apps abrem aqui dentro e continuam abertos quando você troca de tela
+// ---- área de trabalho: os apps que eu vendo abrem aqui dentro e continuam abertos quando você troca de tela
 function abrir(id, destino) {
-  const a = APPS_C[id]; if (!a) return;
+  if (MODS[id]) { ir(id + (destino && destino !== '/' ? destino : ''), true); return; }
+  const a = APPS_C[id]; if (!a || !a.url) return;
   const s = casca();
   let w = ABERTOS.get(id);
   if (!w) {
@@ -642,32 +741,17 @@ function abrir(id, destino) {
     frame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads'); // o app não consegue tirar você da Central
     frame.addEventListener('load', () => frame.classList.remove('carregando'));
     w = { frame, a }; ABERTOS.set(id, w); s.frames.append(frame);
-    carrega(id, destino);
-  } else if (destino) carrega(id, destino);
+    carrega(id);
+  }
   desenhaAbertos();
-  ir('app:' + id);
+  ir('app:' + id, true);
 }
-async function carrega(id, destino) {
+function carrega(id) {
   const w = ABERTOS.get(id); if (!w) return;
   w.frame.classList.add('carregando');
-  try {
-    if (w.a.vps) {
-      const r = await call('abrirApp', { app: w.a.vps, destino: destino || '' });
-      if (!r.url) throw new Error('O servidor não liberou o ' + w.a.nome + '.');
-      w.frame.src = r.url;
-    } else w.frame.src = w.a.url;
-  } catch (e) { fecha(id); fail(e); }
+  w.frame.src = w.a.url;
 }
-async function novaAba(id) {
-  const a = APPS_C[id]; if (!a) return;
-  if (!a.vps) { window.open(a.url, '_blank', 'noopener'); return; }
-  const aba = window.open('about:blank', '_blank'); // abre já no toque, senão o navegador bloqueia
-  try {
-    const r = await call('abrirApp', { app: a.vps });
-    if (!r.url) throw new Error('O servidor não liberou o ' + a.nome + '.');
-    if (aba) { aba.opener = null; aba.location.href = r.url; } else location.href = r.url;
-  } catch (e) { if (aba) aba.close(); fail(e); }
-}
+function novaAba(id) { const a = APPS_C[id]; if (a && a.url) window.open(a.url, '_blank', 'noopener'); }
 function fecha(id) {
   const w = ABERTOS.get(id); if (!w) return;
   w.frame.remove(); ABERTOS.delete(id); desenhaAbertos();
@@ -679,7 +763,7 @@ function desenhaAbertos() {
   SH.abertos.replaceChildren(...[...ABERTOS.keys()].map((id) => {
     const a = APPS_C[id];
     return h('div', { class: 'ab', 'data-app': id },
-      h('button', { type: 'button', class: 'ab-go', onclick: () => ir('app:' + id) }, selo(a), h('span', { text: a.nome })),
+      h('button', { type: 'button', class: 'ab-go', onclick: () => ir('app:' + id, true) }, selo(a), h('span', { text: a.nome })),
       h('button', { type: 'button', class: 'ab-x', 'aria-label': 'Fechar ' + a.nome, title: 'Fechar', onclick: () => fecha(id) }, ic('x')));
   }));
   marcaNav();
@@ -689,18 +773,13 @@ function mostraApp(id) {
   if (!w) { abrir(id); return; }
   for (const [k, x] of ABERTOS) x.frame.classList.toggle('on', k === id);
   const a = w.a;
-  let telas = null;
-  if (id === 'amazon') {
-    telas = h('select', { class: 'input ws-ir', 'aria-label': 'Ir para a tela do Painel Amazon', onchange: (ev) => { const d = ev.target.value; ev.target.value = ''; if (d) carrega('amazon', d); } },
-      h('option', { value: '', text: 'Ir para…' }), AMAZON_TELAS.map(([d, t]) => h('option', { value: d, text: t })));
-  }
-  SH.wsBar.replaceChildren(...[ // replaceChildren escreveria "null": só peças de verdade
+  SH.wsBar.replaceChildren(
     h('button', { class: 'btn ghost icon-btn', type: 'button', 'aria-label': 'Voltar', title: 'Voltar', onclick: () => ir(VOLTAR || 'inicio') }, ic('back')),
     selo(a), h('div', { class: 'ws-tt' }, h('b', { text: a.nome }), h('small', { text: a.sub })),
-    ponto(statusDe(id)), telas, h('span', { class: 'sp' }),
+    ponto(statusDe(id)), h('span', { class: 'sp' }),
     h('button', { class: 'btn ghost icon-btn', type: 'button', title: 'Recarregar', 'aria-label': 'Recarregar', onclick: () => carrega(id) }, ic('sync')),
     h('button', { class: 'btn ghost icon-btn', type: 'button', title: 'Abrir em nova aba', 'aria-label': 'Abrir em nova aba', onclick: () => novaAba(id) }, ic('ext')),
-    h('button', { class: 'btn ghost icon-btn', type: 'button', title: 'Fechar', 'aria-label': 'Fechar ' + a.nome, onclick: () => fecha(id) }, ic('x'))].filter(Boolean));
+    h('button', { class: 'btn ghost icon-btn', type: 'button', title: 'Fechar', 'aria-label': 'Fechar ' + a.nome, onclick: () => fecha(id) }, ic('x')));
 }
 
 // ---- peças das telas
@@ -748,7 +827,7 @@ function alertasDrop(A) {
   if (A.envios) itens.push(['truck', plural(A.envios, 'compra a caminho', 'compras a caminho'), '/logistica', 'info']);
   if (!itens.length) return null;
   return h('ul', { class: 'alertas' }, itens.map(([icone, t, destino, tipo]) => h('li', {},
-    h('button', { type: 'button', class: 'al al-' + tipo, onclick: () => abrir('amazon', destino) }, ic(icone), h('span', { text: t }), ic('go')))));
+    h('button', { type: 'button', class: 'al al-' + tipo, onclick: () => ir('amazon' + destino, true) }, ic(icone), h('span', { text: t }), ic('go')))));
 }
 function linhaSinc(A, soBotao) {
   const o = (A.tarefas || {}).orders;
@@ -761,7 +840,7 @@ function linhaSinc(A, soBotao) {
       const r = await call('amazonSincronizar');
       if (r.erro) throw new Error(r.mensagem || 'O Painel Amazon não respondeu.');
       toast(r.jaRodando ? 'Já estava atualizando. Os números chegam em instantes.' : 'Pedi à Amazon. Os números novos chegam em 1 ou 2 minutos.', 'ok', 4500);
-      setTimeout(() => { if (ROTA === 'inicio' || ROTA === 'dropshipping') { FORCAR = true; VISTAS[ROTA](SH.vista); } }, 75000);
+      setTimeout(() => { if (ROTA === 'inicio') { FORCAR = true; VISTAS.inicio(SH.vista); } }, 75000);
     } catch (e) { fail(e); }
     btn.disabled = false; rot.textContent = 'Atualizar agora';
   });
@@ -787,7 +866,7 @@ function dinheiro(A, completo) {
 function blocoDrop(c) {
   const A = c.amazon || {};
   const hd = h('div', { class: 'card-hd' }, h('div', {}, h('h2', { text: 'Dropshipping' }), h('p', { class: 'muted', text: A.shopee ? 'Amazon e Shopee' : 'Amazon' })),
-    h('button', { class: 'btn sm', type: 'button', onclick: () => abrir('amazon') }, 'Abrir painel', ic('go')));
+    h('button', { class: 'btn sm', type: 'button', onclick: () => ir('amazon', true) }, 'Abrir', ic('go')));
   if (A.erro) return h('section', { class: 'card drop' }, hd, h('p', { class: 'err', text: A.erro }));
   return h('section', { class: 'card drop' }, hd, dinheiro(A), grafico(A.serie || [], mesNome(A.de)), alertasDrop(A), linhaSinc(A));
 }
@@ -802,7 +881,7 @@ function blocoRadar(R, curto) {
   return h('div', { class: 'radar' }, selo(APPS_C.radar),
     h('div', { class: 'ap-tt' }, h('b', { text: curto ? 'Quem procurar' : 'Radar de Clientes' }),
       h('small', { text: plural(R.novo, 'negócio ainda sem contato', 'negócios ainda sem contato') + ' · ' + R.contatado + ' contatados · ' + plural(R.interessado, 'interessado', 'interessados') + (R.fechado ? ' · ' + plural(R.fechado, 'fechado', 'fechados') : '') })),
-    h('button', { class: 'btn sm', type: 'button', onclick: () => abrir('radar', '/clientes') }, 'Abrir Radar'));
+    h('button', { class: 'btn sm', type: 'button', onclick: () => ir('radar/clientes', true) }, 'Meus clientes'));
 }
 function blocoVenda(c) {
   return h('section', { class: 'card venda' },
@@ -842,38 +921,6 @@ VISTAS.inicio = (v) => {
   }).catch((e) => falhaNaTela(corpo, e, () => VISTAS.inicio(v)));
 };
 
-VISTAS.dropshipping = (v) => {
-  const corpo = h('div', { class: 'pg-body' }, carregando('Amazon'));
-  v.replaceChildren(h('div', { class: 'pg' },
-    cabeca('Dropshipping', 'Amazon e Shopee, controlados pelo Painel Amazon', botaoAtualizar(() => VISTAS.dropshipping(v)),
-      h('button', { class: 'btn primary', type: 'button', onclick: () => abrir('amazon') }, 'Abrir o painel completo')),
-    corpo));
-  pegaCentral().then((c) => {
-    if (ROTA !== 'dropshipping' || !corpo.isConnected) return;
-    const A = c.amazon || {};
-    if (A.erro) { corpo.replaceChildren(erroCard(A.erro, () => VISTAS.dropshipping(v))); return; }
-    const repor = A.repor && A.repor.length
-      ? h('ul', { class: 'lista' }, A.repor.map((x) => h('li', {}, h('div', { class: 'ap-tt' }, h('b', { text: x.nome }),
-        h('small', { text: (x.estoque <= 0 ? 'Sem estoque' : x.estoque + ' em estoque') + (x.dias != null ? ' · dura ' + Math.max(0, Math.round(x.dias)) + ' dias' : '') + (x.chegando ? ' · ' + x.chegando + ' chegando' : '') })),
-        x.comprar ? h('span', { class: 'pill st-proposta', text: 'Comprar ' + x.comprar } ) : null)))
-      : h('p', { class: 'muted', text: A.semDados && A.semDados === A.produtos ? 'Nenhum produto vendeu nos últimos 30 dias, então ainda não dá para calcular a reposição.' : 'Nada para repor agora.' });
-    const sinc = h('ul', { class: 'lista' }, Object.entries(NOME_TAREFA).map(([k, nome]) => {
-      const t = (A.tarefas || {})[k];
-      return h('li', {}, h('span', { class: 'st ' + (!t ? '' : t.ok ? 'st-ok' : 'st-off') }, h('i')),
-        h('div', { class: 'ap-tt' }, h('b', { text: nome }), h('small', { text: t ? quando(t.em) + (t.msg ? ' · ' + t.msg : '') : 'Ainda não atualizou' })));
-    }));
-    corpo.replaceChildren(
-      h('section', { class: 'card' }, h('div', { class: 'card-hd' }, h('h2', { text: 'Como está o mês' })), dinheiro(A, true), grafico(A.serie || [], mesNome(A.de)), alertasDrop(A)),
-      h('div', { class: 'duas' },
-        h('section', { class: 'card' }, h('div', { class: 'card-hd' }, h('h2', { text: 'Para repor' }), h('button', { class: 'btn sm ghost', type: 'button', onclick: () => abrir('amazon', '/produtos') }, 'Produtos', ic('go'))), repor),
-        h('section', { class: 'card' }, h('div', { class: 'card-hd' }, h('div', {}, h('h2', { text: 'Ligação com a Amazon' }), h('p', { class: 'muted', text: 'O painel confere sozinho a cada poucos minutos' }))), sinc, linhaSinc(A, true),
-          h('p', { class: 'shopee' }, h('span', { class: 'st ' + (A.shopee ? 'st-ok' : '') }, h('i')), A.shopee ? 'Shopee conectada' : 'Shopee ainda não conectada', ' · ',
-            h('button', { class: 'lnk', type: 'button', onclick: () => abrir('amazon', '/config') }, A.shopee ? 'ver' : 'conectar')))),
-      h('section', { class: 'card' }, h('div', { class: 'card-hd' }, h('div', {}, h('h2', { text: 'Ir direto para' }), h('p', { class: 'muted', text: 'Abre o Painel Amazon aqui dentro, já na tela escolhida' }))),
-        h('div', { class: 'chips2' }, AMAZON_TELAS.map(([d, t]) => h('button', { type: 'button', class: 'chip2', onclick: () => abrir('amazon', d) }, t)))));
-  }).catch((e) => falhaNaTela(corpo, e, () => VISTAS.dropshipping(v)));
-};
-
 function prodCard(id, o) {
   const a = APPS_C[id];
   return h('article', { class: 'prod' },
@@ -886,7 +933,6 @@ VISTAS.apps = (v) => {
   const grade = h('div', { class: 'prods' });
   v.replaceChildren(h('div', { class: 'pg' }, cabeca('Apps que vendo', 'O que está no ar, onde editar e a demonstração de cada um'), grade));
   const desenha = () => {
-    const R = CEN.d && CEN.d.radar;
     grade.replaceChildren(
       prodCard('dads', { texto: 'Pedidos pelo site com pagamento online, painel do dono, entregas e cardápio com pratos em 3D.',
         extra: h('div', { class: 'prod-ed' }, h('small', { class: 'lab', text: 'Editar no admin do Dad’s (abre em nova aba, com a senha dele)' }),
@@ -897,9 +943,7 @@ VISTAS.apps = (v) => {
       prodCard('imob', { texto: 'Atende o cliente no WhatsApp, confirma o preço com o proprietário e chama o corretor.',
         acoes: [h('button', { class: 'btn', type: 'button', onclick: () => abrir('imob') }, 'Abrir demonstração')] }),
       prodCard('site', { texto: 'A página que apresenta a Star-net. No computador, a tecla F abre o modo apresentação.',
-        acoes: [h('button', { class: 'btn', type: 'button', onclick: () => abrir('site') }, 'Abrir'), h('a', { class: 'btn', href: 'https://star-net.pro/', target: '_blank', rel: 'noopener' }, 'Apresentar', ic('ext'))] }),
-      prodCard('radar', { texto: R && !R.erro ? plural(R.novo, 'negócio ainda sem contato', 'negócios ainda sem contato') + ', ' + R.contatado + ' contatados e ' + plural(R.interessado, 'interessado', 'interessados') + '.' : 'Acha no Google Maps os negócios sem site e organiza o contato.',
-        acoes: [h('button', { class: 'btn', type: 'button', onclick: () => abrir('radar', '/clientes') }, 'Meus clientes'), h('button', { class: 'btn', type: 'button', onclick: () => abrir('radar') }, 'Buscar negócios')] }));
+        acoes: [h('button', { class: 'btn', type: 'button', onclick: () => abrir('site') }, 'Abrir'), h('a', { class: 'btn', href: 'https://star-net.pro/', target: '_blank', rel: 'noopener' }, 'Apresentar', ic('ext'))] }));
   };
   desenha();
   pegaCentral().then(() => { if (ROTA === 'apps' && grade.isConnected) desenha(); }).catch((e) => { if (e instanceof SessaoError) fail(e); });
@@ -1259,4 +1303,15 @@ async function start() {
   if (!r.configurado) { await authenticatorView(); return; }
   loginView(r.travado ? 'Muitos códigos errados. O painel destrava às ' + horaBR(r.travado) + '.' : '');
 }
+// Ponte para as telas dos apps que moram na Central (apps/amazon.js, apps/radar.js): o login, os avisos e a navegação são estes.
+window.__snPonte = {
+  call,
+  sessao: () => sessao,
+  servidor,
+  erroSessao: () => new SessaoError('A entrada deste aparelho venceu. Digite o código do Authenticator de novo.'),
+  sessaoVencida: (e) => { if (e instanceof SessaoError) fail(e); },
+  toast: (msg, tipo) => toast(msg, tipo === 'ok' ? 'ok' : tipo === 'err' ? 'err' : 'info', tipo === 'err' ? 6000 : 3200),
+  ir: (r) => ir(r, true),
+  mudou: (app, what) => { CEN.em = 0; if (app === 'amazon' && what !== 'chat' && MOD_P.amazon) MOD_P.amazon.then((m) => { ALERTAS_EM = 0; atualizaAlertas(m, true); }).catch(() => {}); },
+};
 start().catch((e) => setupView(e.message));
