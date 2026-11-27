@@ -306,7 +306,7 @@ function codeInput(onFull) {
 }
 
 function urlServidorValida(v) {
-  return /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(v) || (LOCAL && /^http:\/\/127\.0\.0\.1:\d+\//.test(v));
+  return /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(v) || v === 'https://api.star-net.pro/exec' || (LOCAL && /^http:\/\/127\.0\.0\.1:\d+\//.test(v));
 }
 
 // Primeira vez: instalar o servidor do painel (Apps Script) e colar o URL dele aqui.
