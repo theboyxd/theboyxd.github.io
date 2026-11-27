@@ -487,7 +487,82 @@ async function importFiles(files) {
 function statusPill(st) { const k = STATUS_TXT[st] ? st : 'sem'; return h('span', { class: 'pill st-' + k, text: STATUS_TXT[k] }); }
 
 
-function appView() {
+// ---------------------------------------------------------------- central (AIO): as três frentes e os apps de cada uma
+// abrir: 'vps:<id>' = app protegido na VPS (passe de uso único); 'aba:<id>' = troca de aba; URL = abre o endereço.
+const FRENTES = {
+  starnet: { nome: 'Star-net', lema: 'Empresa de apps', cor: 'f-blue', apps: [
+    { nome: 'Dad’s Burger', desc: 'Admin do cliente: pedidos, motoboy, Mercado Pago', abrir: 'https://dadsburguer.site/admin', sigla: 'DB' },
+    { nome: 'Radar de Clientes', desc: 'Acha negócios sem site no Google Maps', abrir: 'vps:radar', sigla: 'RC' },
+    { nome: 'PropPulse', desc: 'Recepcionista de imobiliária (demonstração)', abrir: 'https://star-net.pro/imobiliaria/', sigla: 'PP' },
+    { nome: 'Cardápio 3D', desc: 'Cardápio com pratos em 3D e AR (demonstração)', abrir: 'https://star-net.pro/m/demo', sigla: '3D' },
+    { nome: 'Site star-net.pro', desc: 'A página que os clientes veem', abrir: 'https://star-net.pro/', sigla: 'SN' },
+  ] },
+  drop: { nome: 'Dropshipping', lema: 'Lojas e produtos', cor: 'f-amber', apps: [
+    { nome: 'Painel Amazon', desc: 'Vendas, pedidos, lucro e Garimpo de produtos', abrir: 'vps:amazon', sigla: 'AZ' },
+    { nome: 'Shopee', desc: 'Dentro do Painel Amazon, em Configurações › Shopee', abrir: 'vps:amazon', sigla: 'SH' },
+  ] },
+  invest: { nome: 'Investimentos', lema: 'Seu dinheiro trabalhando', cor: 'f-green', apps: [
+    { nome: 'Carteira', desc: 'Aportes, posições e rendimento. Em construção', abrir: '', sigla: 'CT' },
+  ] },
+};
+let aba = 'inicio';
+function irPara(id) { aba = id; appView(); window.scrollTo(0, 0); }
+function abas() {
+  const itens = [['inicio', 'Início'], ['starnet', 'Star-net'], ['drop', 'Dropshipping'], ['invest', 'Investimentos']];
+  return h('nav', { class: 'abas', 'aria-label': 'Seções' }, itens.map(([id, t]) => h('button', { type: 'button', class: 'aba', 'aria-current': aba === id ? 'page' : null, onclick: () => irPara(id) }, t)));
+}
+function abrirDe(a) {
+  if (!a.abrir) return toast('Ainda em construção.', 'info');
+  if (a.abrir.startsWith('vps:')) return abrirApp(a.abrir.slice(4));
+  window.open(a.abrir, '_blank', 'noopener');
+}
+function tile(a) {
+  const pronto = Boolean(a.abrir);
+  return h('button', { type: 'button', class: 'tile' + (pronto ? '' : ' off'), onclick: () => abrirDe(a), 'aria-label': 'Abrir ' + a.nome },
+    h('span', { class: 'sig', text: a.sigla }),
+    h('span', { class: 'tt' }, h('b', { text: a.nome }), h('small', { text: a.desc })),
+    pronto ? ic('ext') : h('span', { class: 'pill st-pausado', text: 'Em breve' }));
+}
+function frenteHead(id) {
+  const f = FRENTES[id];
+  return h('div', { class: 'fhead ' + f.cor }, h('span', { class: 'dot' }), h('h2', { text: f.nome }), h('span', { class: 'muted', text: f.lema }));
+}
+function hubView() {
+  closeDrawer();
+  const lista = (data && data.projetos) || [];
+  const noAr = lista.filter((p) => p.status === 'no-ar').length, andam = lista.filter((p) => p.status === 'andamento').length;
+  const nApps = Object.values(FRENTES).reduce((n, f) => n + f.apps.filter((a) => a.abrir).length, 0);
+  const kpi = (n, t, extra) => h('div', { class: 'kpi' }, h('b', { text: String(n) }), h('span', { text: t }), extra || null);
+  const frente = (id) => {
+    const f = FRENTES[id];
+    return h('section', { class: 'frente ' + f.cor },
+      h('div', { class: 'frente-top' }, frenteHead(id), h('button', { type: 'button', class: 'btn ghost sm', onclick: () => irPara(id) }, 'Ver tudo')),
+      h('div', { class: 'tiles' }, f.apps.map(tile)));
+  };
+  const hora = new Date().getHours();
+  $app.replaceChildren(
+    h('header', { class: 'top' }, brand('Central'), abas(),
+      h('button', { class: 'btn ghost sm', type: 'button', onclick: connectDrawer }, ic('phone'), 'Conectar aparelho'),
+      h('button', { class: 'btn ghost sm', type: 'button', onclick: sairView }, ic('out'), 'Sair')),
+    h('main', { class: 'wrap' },
+      aba === 'inicio' ? [
+        h('div', { class: 'ola' }, h('h1', { text: (hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite') }),
+          h('p', { class: 'muted', text: 'Seus apps, seus negócios e seus investimentos, num lugar só.' })),
+        h('div', { class: 'kpis' }, kpi(nApps, 'apps prontos para abrir'), kpi(lista.length, 'projetos Star-net'), kpi(noAr, 'no ar'), kpi(andam, 'em andamento')),
+        frente('starnet'), frente('drop'), frente('invest'),
+      ] : aba === 'invest' ? [
+        frenteHead('invest'),
+        h('div', { class: 'tiles' }, FRENTES.invest.apps.map(tile)),
+        h('div', { class: 'aviso' }, h('b', { text: 'O que vem aqui' }),
+          h('p', { text: 'Registro dos seus aportes e posições, quanto cada um rende e o total da carteira. É uma ferramenta de acompanhamento: as decisões de compra e venda são suas.' })),
+      ] : [
+        frenteHead(aba), h('div', { class: 'tiles' }, FRENTES[aba].apps.map(tile)),
+      ]));
+}
+
+function appView() { return aba === 'starnet' ? projetosView() : hubView(); }
+
+function projetosView() {
   const lista = data.projetos;
   const counts = {}; for (const p of lista) counts[p.status || 'sem'] = (counts[p.status || 'sem'] || 0) + 1;
   const search = h('input', { class: 'input search', type: 'search', placeholder: 'Buscar projeto, cliente, link ou PDF', value: filtro.q, 'aria-label': 'Buscar', oninput: (ev) => { filtro.q = ev.target.value; renderGrid(); } });
@@ -501,16 +576,16 @@ function appView() {
     grid.replaceChildren(...(vis.length ? vis.map(card) : [h('div', { class: 'empty', text: lista.length ? 'Nenhum projeto com esse filtro.' : 'Nenhum projeto ainda. Toque em “Novo projeto”.' })]));
   }
   $app.replaceChildren(
-    h('header', { class: 'top' }, brand('Painel de projetos'),
+    h('header', { class: 'top' }, brand('Central'), abas(),
       h('button', { class: 'btn ghost icon-btn', type: 'button', title: 'Recarregar', 'aria-label': 'Recarregar', onclick: async () => { busy('Recarregando…'); try { await loadData(); idle(); if (data) { appView(); toast('Atualizado.', 'ok', 1500); } else emptyView(); } catch (e) { fail(e); } } }, ic('sync')),
       h('button', { class: 'btn ghost sm', type: 'button', onclick: connectDrawer }, ic('phone'), 'Conectar outro aparelho'),
       h('button', { class: 'btn ghost sm', type: 'button', onclick: sairView }, ic('out'), 'Sair')),
     h('main', { class: 'wrap' },
-      h('div', { class: 'tools apps' },
-        [['amazon', 'Painel Amazon'], ['radar', 'Radar de Clientes']].map(([id, nome]) => h('button', { class: 'btn ghost', type: 'button', onclick: () => abrirApp(id) }, nome + ' ↗'))),
+      frenteHead('starnet'), h('div', { class: 'tiles' }, FRENTES.starnet.apps.map(tile)),
+      h('h3', { class: 'sub', text: 'Projetos e clientes' }),
       h('div', { class: 'tools' }, search, h('button', { class: 'btn primary', type: 'button', onclick: () => editDrawer(null) }, ic('plus'), 'Novo projeto')),
       chips, grid,
-      h('p', { class: 'foot' }, 'Dados no seu Google Drive, pasta ', pastaUrl ? h('a', { href: pastaUrl, target: '_blank', rel: 'noopener noreferrer', text: 'Star-net · Painel' }) : 'Star-net · Painel', data.atualizado ? ' · atualizado em ' + dataBR(data.atualizado) : '', '.')));
+      h('p', { class: 'foot' }, 'Dados no servidor da Star-net', data.atualizado ? ' · atualizado em ' + dataBR(data.atualizado) : '', '.')));
   renderGrid();
 }
 
