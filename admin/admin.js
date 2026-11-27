@@ -506,10 +506,22 @@ function appView() {
       h('button', { class: 'btn ghost sm', type: 'button', onclick: connectDrawer }, ic('phone'), 'Conectar outro aparelho'),
       h('button', { class: 'btn ghost sm', type: 'button', onclick: sairView }, ic('out'), 'Sair')),
     h('main', { class: 'wrap' },
+      h('div', { class: 'tools apps' },
+        [['amazon', 'Painel Amazon'], ['radar', 'Radar de Clientes']].map(([id, nome]) => h('button', { class: 'btn ghost', type: 'button', onclick: () => abrirApp(id) }, nome + ' ↗'))),
       h('div', { class: 'tools' }, search, h('button', { class: 'btn primary', type: 'button', onclick: () => editDrawer(null) }, ic('plus'), 'Novo projeto')),
       chips, grid,
       h('p', { class: 'foot' }, 'Dados no seu Google Drive, pasta ', pastaUrl ? h('a', { href: pastaUrl, target: '_blank', rel: 'noopener noreferrer', text: 'Star-net · Painel' }) : 'Star-net · Painel', data.atualizado ? ' · atualizado em ' + dataBR(data.atualizado) : '', '.')));
   renderGrid();
+}
+
+// Apps na VPS (Amazon, Radar): o servidor dá um passe de uso único e a aba abre já liberada.
+async function abrirApp(id) {
+  const aba = window.open('about:blank', '_blank');
+  try {
+    const r = await call('abrirApp', { app: id });
+    if (!r.url) throw new Error('sem endereço');
+    if (aba) { aba.opener = null; aba.location.href = r.url; } else location.href = r.url;
+  } catch (e) { if (aba) aba.close(); fail(e); }
 }
 
 async function connectDrawer() {
