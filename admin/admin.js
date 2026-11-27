@@ -530,7 +530,7 @@ const APPS_C = {
 };
 const STATUS_DE = { amazon: 'amazon', radar: 'radar', dads: 'dads', cardapio: 'site', imob: 'site', site: 'site' };
 const DADS_ADMIN = 'https://dadsburguer.site/admin';
-const DADS_SECOES = [['kanban', 'Pedidos'], ['catalog', 'Cardápio e estoque'], ['delivery', 'Entregas'], ['hours', 'Horários'], ['finance', 'Financeiro']];
+const DADS_SECOES = [['kanban', 'Pedidos'], ['catalog', 'Cardápio, estoque e 3D'], ['delivery', 'Entregas'], ['hours', 'Horários'], ['finance', 'Financeiro']];
 const AMAZON_TELAS = [['/', 'Visão geral'], ['/produtos', 'Produtos'], ['/vendas', 'Vendas'], ['/logistica', 'Logística'], ['/garimpo', 'Garimpo'], ['/config', 'Configurações']];
 const NOME_TAREFA = { listings: 'Anúncios', stock: 'Estoque', orders: 'Pedidos', fees: 'Taxas', buybox: 'Buy Box' };
 
@@ -888,7 +888,7 @@ VISTAS.apps = (v) => {
   const desenha = () => {
     const R = CEN.d && CEN.d.radar;
     grade.replaceChildren(
-      prodCard('dads', { texto: 'Pedidos pelo site com pagamento online, painel do dono, entregas e cardápio.',
+      prodCard('dads', { texto: 'Pedidos pelo site com pagamento online, painel do dono, entregas e cardápio com pratos em 3D.',
         extra: h('div', { class: 'prod-ed' }, h('small', { class: 'lab', text: 'Editar no admin do Dad’s (abre em nova aba, com a senha dele)' }),
           h('div', { class: 'chips2' }, DADS_SECOES.map(([k, t]) => h('a', { class: 'chip2', href: DADS_ADMIN + '?aba=' + k, target: '_blank', rel: 'noopener noreferrer' }, t)))),
         acoes: [h('button', { class: 'btn', type: 'button', onclick: () => abrir('dads') }, 'Ver o site'), linkDads('')] }),
