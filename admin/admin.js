@@ -2,7 +2,7 @@
 // Página estática. O login é o código de 6 dígitos do Google Authenticator, conferido pelo "servidor do painel":
 // um Google Apps Script na sua conta Google, que também guarda os projetos e os PDFs numa pasta do seu Google Drive.
 // Esta página não guarda dados nem segredos; ela só conversa com o servidor do painel.
-const SERVIDOR = ''; // Vazio de propósito: o endereço do servidor (Apps Script, termina em /exec) NÃO vai para o repositório público, senão qualquer pessoa poderia errar o código para travar o painel. Cada aparelho guarda o seu (veja "Conectar outro aparelho").
+const SERVIDOR = 'https://api.star-net.pro/exec'; // servidor próprio na VPS da Star-net (o código do Authenticator é conferido lá)
 const LOCAL = ['127.0.0.1', 'localhost'].includes(location.hostname);
 const QS = new URLSearchParams(location.search);
 const MAX_PDF = 30 * 1024 * 1024;
