@@ -341,7 +341,7 @@ body.em-app{overflow:hidden}
   .cx-top .cx-brand{padding:0;margin-right:auto}
   .cx-top .btn{color:#c5d0ec}
   .cx-top .btn:hover{background:rgba(255,255,255,.08);color:#fff}
-  .cx-tabs{position:fixed;left:0;right:0;bottom:0;z-index:15;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding:4px 6px max(4px,env(safe-area-inset-bottom));background:rgba(255,255,255,.97);border-top:1px solid var(--line);backdrop-filter:blur(10px)}
+  .cx-tabs{position:fixed;left:0;right:0;bottom:0;z-index:15;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));padding:4px 2px max(4px,env(safe-area-inset-bottom));background:rgba(255,255,255,.97);border-top:1px solid var(--line);backdrop-filter:blur(10px)}
   .tb{display:grid;justify-items:center;align-content:center;gap:4px;min-height:54px;padding:4px 0;border:0;border-radius:12px;background:none;color:#5d6b8f;font:600 11px/1 'Inter',sans-serif;cursor:pointer}
   .tb svg{width:23px;height:23px}
   .tb.on{color:var(--blue)}
@@ -367,7 +367,7 @@ body.em-app{overflow:hidden}
 svg.i{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .cx-view{background-image:radial-gradient(rgba(11,31,75,.07) 1px,transparent 1.2px);background-size:20px 20px;background-attachment:local}
 .num{font-family:'JetBrains Mono',ui-monospace,monospace;letter-spacing:-.04em}
-.atalhos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.atalhos{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:18px}
 .at{display:flex;align-items:center;gap:12px;min-height:68px;padding:12px 14px;border:1.5px solid var(--line);border-radius:18px;background:#fff;color:var(--ink);text-align:left;cursor:pointer;box-shadow:var(--shadow);transition:border-color .15s,transform .15s}
 .at:hover{border-color:#c7d4f3;transform:translateY(-1px)}
 .at-ic{flex:none;width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--field);color:var(--blue)}

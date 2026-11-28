@@ -58,6 +58,7 @@ const ICONS = {
   grid: 'M4 4h6.5v6.5H4zM13.5 4H20v6.5h-6.5zM4 13.5h6.5V20H4zM13.5 13.5H20V20h-6.5z',
   store: 'M4 9.5 5.5 4h13L20 9.5M4 9.5a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0 2.7 2.7 0 0 0 5.3 0M5 11.5V20h14v-8.5M10 20v-5h4v5',
   folder: 'M3 7.5A2.5 2.5 0 0 1 5.5 5H9l2 2.5h7.5A2.5 2.5 0 0 1 21 10v7.5a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5z',
+  person: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20.5c.9-3.8 4-6 7.5-6s6.6 2.2 7.5 6',
   box: 'M12 3 20.5 7.5v9L12 21l-8.5-4.5v-9zM3.5 7.5 12 12l8.5-4.5M12 12v9',
   truck: 'M2.5 6h11v9.5h-11zM13.5 9.5h4l3 3v3h-7M6.5 19a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6zM17 19a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6',
   alert: 'M12 4 2.8 19.5h18.4zM12 10v4.5M12 17.2v.3',
@@ -573,11 +574,11 @@ async function pegaPratos() {
 
 // ---- casca: menu lateral (computador), barra de baixo (celular) e a área onde os apps abrem
 const NAV = [['inicio', 'Início', 'home', 'Início'], ['amazon', 'Loja Amazon', 'cart', 'Loja'], ['radar', 'Novos clientes', 'radar', 'Clientes'],
-  ['projetos', 'Projetos', 'grid', 'Projetos']];
+  ['ia', 'Modelos de IA', 'person', 'Modelos'], ['projetos', 'Projetos', 'grid', 'Projetos']];
 // Apps que moram na Central: as telas vêm de apps/<id>.js (montadas de Star-net/star-net-central) e falam com o app
 // pela ponte (ação "app" do servidor do painel). Endereços: #/amazon/produtos, #/radar/clientes…
 const VERSAO = new URL(import.meta.url).searchParams.get('v') || '';
-const MODS = { amazon: { arquivo: 'apps/amazon.js', nome: 'Loja Amazon' }, radar: { arquivo: 'apps/radar.js', nome: 'Novos clientes' } };
+const MODS = { amazon: { arquivo: 'apps/amazon.js', nome: 'Loja Amazon' }, radar: { arquivo: 'apps/radar.js', nome: 'Novos clientes' }, ia: { arquivo: 'apps/ia.js', nome: 'Modelos de IA' } };
 const MOD_P = {}; let MOD_ATUAL = ''; let ALERTAS_EM = 0;
 function modulo(id) {
   if (!MOD_P[id]) MOD_P[id] = import('./' + MODS[id].arquivo + (VERSAO ? '?v=' + VERSAO : '')).catch((e) => { delete MOD_P[id]; throw e; });
@@ -933,6 +934,7 @@ VISTAS.inicio = (v) => {
     atalho('plus', 'Registrar venda', 'Loja Amazon', novaVenda),
     atalho('search', 'Achar produto', 'Para vender na Amazon', () => ir('amazon/garimpo', true)),
     atalho('radar', 'Buscar clientes', 'No Google Maps', () => ir('radar', true)),
+    atalho('sparkles', 'Criar conteúdo', 'Fotos e vídeos das modelos', () => ir('ia/criar', true)),
     atalho('calendar', 'Nova visita', 'Cardápio 3D do negócio', () => visitaDrawer(null)));
   const corpo = h('div', { class: 'bento' }, carregando('Loja Amazon'), carregando('Precisa de você'));
   v.replaceChildren(h('div', { class: 'pg' }, cabeca(ola, dia, botaoAtualizar(() => VISTAS.inicio(v))), atalhos, corpo));
