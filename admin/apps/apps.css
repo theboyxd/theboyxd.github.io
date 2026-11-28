@@ -765,3 +765,22 @@ body.coletor { background: var(--bg); }
   .jx .ia-prog { flex-wrap: wrap; }
   .jx .ia-prog .btn { margin-left: auto; }
 }
+
+/* runpod:start */
+/* Máquina automática da RunPod (Conexões). Simples de propósito: a tela inteira vai ser redesenhada. */
+.jx .rp-fatos { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px; }
+.jx .rp-fato { display: grid; gap: 2px; padding: 10px 12px; border-radius: 12px; background: #f3f6fc; min-width: 0; }
+.jx .rp-fato span { font-size: 12px; font-weight: 700; color: var(--ez-tx3); }
+.jx .rp-fato b { font-size: 14px; color: var(--ink); overflow-wrap: anywhere; }
+.jx .rp-check { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 14px; color: var(--ink); line-height: 1.4; }
+.jx .rp-check input { width: 18px; height: 18px; margin-top: 1px; flex: 0 0 auto; accent-color: var(--blue); }
+.jx .rp-check small { color: var(--ez-tx3); font-size: 12.5px; }
+.jx .rp-placas li { padding: 0; background: none; }
+.jx .rp-placas li label { width: 100%; padding: 9px 12px; border-radius: 12px; background: #f3f6fc; }
+.jx .ia-lista li.agora { background: #e8efff; }
+.jx .ia-lista li.agora svg.i { color: var(--blue); }
+.jx .ia-manual { padding: 0; background: none; }
+.jx .ia-manual > summary { padding: 12px 14px; border-radius: 14px; background: var(--field); }
+.jx .ia-manual > .card { margin-top: 12px; }
+@media (max-width: 560px) { .jx .rp-fatos { grid-template-columns: minmax(0, 1fr); } }
+/* runpod:end */
