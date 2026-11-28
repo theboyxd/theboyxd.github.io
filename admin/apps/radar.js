@@ -27,7 +27,7 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
     <div class="status-line">${y(z.running||z.pending?`loader`:`info`)}<span>${_e()}</span></div>
     ${n.length?v`
       <div style="margin:10px 0;padding:10px 12px;border-radius:8px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);font-size:12.5px">
-        <b style="color:#f59e0b">🛡️ Proteção Anti-Duplicidade Ativa:</b> ${k(n.length)} estabelecimento(s) foram ignorados nesta extração porque já pertencem à lista de outra pessoa:
+        <b style="color:#fcd34d">🛡️ Proteção Anti-Duplicidade Ativa:</b> ${k(n.length)} estabelecimento(s) foram ignorados nesta extração porque já pertencem à lista de outra pessoa:
         <span class="dim">${n.slice(-6).map(e=>`${e.name} (${e.already_owner})`).join(` · `)}${n.length>6?`…`:``}</span>
       </div>
     `:``}
@@ -60,9 +60,9 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
           </div>
         `:``}
       </div>
-      <div style="padding:10px 14px;margin:10px 0;border-radius:10px;background:rgba(225,29,72,0.08);border:1px solid rgba(225,29,72,0.28);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div style="padding:10px 14px;margin:10px 0;border-radius:10px;background:rgba(255,138,92,0.08);border:1px solid rgba(255,138,92,0.28);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
         <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:700;font-size:13.5px;color:#fff">
-          <input type="checkbox" name="doctor_only" ${n.doctor_only?`checked`:``} style="width:18px;height:18px;accent-color:#e11d48;cursor:pointer">
+          <input type="checkbox" name="doctor_only" ${n.doctor_only?`checked`:``} style="width:18px;height:18px;accent-color:#ffa88a;cursor:pointer">
           <span>🩺 <b>Foco em Doutores e Doutoras (Dr. / Dra. / Consultório)</b></span>
         </label>
         <span class="dim" style="font-size:12px">Ignora clínicas genéricas, franquias e redes corporativas (ex: OdontoCompany, Sorridents, hospitais).</span>
@@ -76,7 +76,7 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 6px">
         <span class="dim" style="font-size:12px;align-self:center">🩺 Doutores(as):</span>
-        ${ae.map(e=>v`<button type="button" class="chip" data-chip="${e}" style="border-color:rgba(225,29,72,0.35);color:#fda4af">${e}</button>`)}
+        ${ae.map(e=>v`<button type="button" class="chip" data-chip="${e}" style="border-color:rgba(255,138,92,0.35);color:#fda4af">${e}</button>`)}
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px">
         <span class="dim" style="font-size:12px;align-self:center">Outros nichos:</span>
@@ -103,7 +103,7 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         ${e.logo_local?v`<img src="${d().replace(/\/$/,``)+e.logo_local}" alt="${e.name}" referrerpolicy="no-referrer" data-some-se-falhar style="width:30px;height:30px;border-radius:50%;object-fit:cover;border:1.5px solid ${r?`rgba(212,175,55,0.45)`:`rgba(215,156,69,0.35)`};flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.25)">`:v`<div style="width:30px;height:30px;border-radius:50%;background:${r?`rgba(212,175,55,0.15)`:`rgba(215,156,69,0.15)`};border:1px solid ${r?`rgba(212,175,55,0.4)`:`rgba(215,156,69,0.3)`};color:${r?`#D4AF37`:`var(--brand)`};font-weight:700;font-size:12.5px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${c}</div>`}
         <b>${e.name}</b>${pe(e.site_kind)}
-        ${r?v`<span class="badge" style="background:#fbf3d9;color:#7a5c00;font-size:11px">★ Clínica / Doutora</span>`:``}
+        ${r?v`<span class="badge" style="background:rgba(251,191,36,.14);color:#fcd34d;font-size:11px">★ Clínica / Doutora</span>`:``}
         ${l?v`<span class="badge" style="font-size:11px;background:var(--field);color:var(--muted)" title="Busca realizada no Google Maps">🔍 ${l}</span>`:``}
         <span class="badge" style="font-size:11.5px;border-color:rgba(215,156,69,0.4);color:var(--brand)">👤 ${s||`Sem ligador`}</span>
         ${e.insta?v`<span class="badge" style="font-size:11.5px">@${e.insta}</span>`:``}
@@ -114,7 +114,7 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
         ${r?v`
           <button class="btn btn-secondary btn-sm" type="button" data-link="${i}" title="Copiar link oficial da clínica (GitHub Pages)">${y(`copy`)}Copiar link da clínica</button>
           <a class="btn-icon sm" href="${a}" target="_blank" rel="noopener noreferrer" title="Abrir prévia da clínica">${y(`external`)}</a>
-          <a class="btn btn-ghost btn-sm" href="#/radar/site-clinica?lead=${encodeURIComponent(e.place_id)}" style="color:#7a5c00">${y(`sparkles`)}Site de clínica ✓</a>
+          <a class="btn btn-ghost btn-sm" href="#/radar/site-clinica?lead=${encodeURIComponent(e.place_id)}" style="color:#fcd34d">${y(`sparkles`)}Site de clínica ✓</a>
         `:v`
           ${i?v`<button class="btn btn-secondary btn-sm" type="button" data-link="${i}" title="${i}">${y(`copy`)}Copiar link do site</button>
             <a class="btn-icon sm" href="${i}" target="_blank" rel="noopener noreferrer" title="Abrir o site dele">${y(`external`)}</a>`:``}
@@ -142,10 +142,10 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
           <button class="btn btn-secondary" type="button" data-csv>${y(`download`)}Planilha ${Y!==`todos`&&Y!==`__sem__`?`(${Y})`:J!==`todos`&&J!==`__sem__`?`(${J})`:`(CSV)`}</button></div>`:``}</div>
 
       <!-- Barra de Separação por Busca Realizada -->
-      <div class="card" style="margin-bottom:14px;border:1px solid rgba(59,130,246,0.28);background:rgba(59,130,246,0.04)">
+      <div class="card" style="margin-bottom:14px;border:1px solid rgba(225,29,72,0.28);background:rgba(225,29,72,0.04)">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px">
           <div>
-            <b style="font-size:14px;color:#60a5fa">🔍 Separar por Busca Realizada (Segmentos)</b>
+            <b style="font-size:14px;color:var(--faint)">🔍 Separar por Busca Realizada (Segmentos)</b>
             <span class="dim" style="font-size:12.5px;margin-left:8px">Filtre seus clientes de acordo com o termo pesquisado no Google Maps:</span>
           </div>
           ${Y===`todos`?``:v`
@@ -356,7 +356,7 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
       </div>
       <div style="display:flex;justify-content:center">
         <div style="width:360px;height:740px;border-radius:44px;border:10px solid #0b0705;overflow:hidden;background:#0b0705;box-shadow:0 20px 50px rgba(0,0,0,.35)">
-          <iframe data-preview title="Prévia do site exemplo" style="width:100%;height:100%;border:0;background:#fff"></iframe>
+          <iframe data-preview title="Prévia do site exemplo" style="width:100%;height:100%;border:0;background:var(--card)"></iframe>
         </div>
       </div>
     </div>`);let c=()=>{ie();let t=e.cloneNode(!1);e.replaceWith(t),ut(t)},l=()=>Object.fromEntries([...e.querySelectorAll(`[data-k]`)].map(e=>[e.dataset.k,e.value.trim()])),u=()=>{let e=l();return e.cor=e.cor.replace(`#`,``),e.cor2=e.cor2.replace(`#`,``),e},f=e=>{let t=l();return t.logo===`logo.png`&&(t.logo=e&&a&&a.logo_local?d().replace(/\/$/,``)+a.logo_local:``),a&&a.hours&&(t.hor=a.hours),t},p=e.querySelector(`[data-preview]`),m=null;function g(t){let r=it(d(),f(!0),n.owner_name);e.querySelector(`[data-open]`).href=r;let i=e.querySelector(`[data-open-public]`);i&&(i.href=U(a,n)||it(n.demo_base,f(!1),n.owner_name)),clearTimeout(m),m=setTimeout(()=>{p.src=r},t?0:400)}g(!0),n.demo_base&&n.has_github&&n.demo_outdated&&st(e,n);let _=e.querySelector(`[data-k="logo"]`),S=e.querySelector(`[data-logo-url]`);function w(){let t=_.value,n=t===`logo.png`?a&&a.logo_local?d().replace(/\/$/,``)+a.logo_local:``:/^https?:\/\//i.test(t)?t:``,r=e.querySelector(`[data-logo-prev]`);r.style.backgroundImage=n?`url("${n.replace(/"/g,`%22`)}")`:``,r.textContent=n?``:`logo`;let i=e.querySelector(`[data-logo-remove]`);i&&(i.hidden=!t)}w();async function T(t,r=`Logo e cores`){if(!a)return N(`Escolha o cliente primeiro.`,`error`);if(!t||!/^image\//.test(t.type))return N(`Isso não é uma imagem. No Instagram ou no Google: botão direito no logo › Copiar imagem.`,`error`);try{let i=await createImageBitmap(t),o=Math.min(1,256/Math.max(i.width,i.height)),s=document.createElement(`canvas`);s.width=Math.max(1,Math.round(i.width*o)),s.height=Math.max(1,Math.round(i.height*o)),s.getContext(`2d`).drawImage(i,0,0,s.width,s.height);let c=Ze(i);c.cor&&(e.querySelector(`[data-k="cor"]`).value=c.cor),c.cor2&&(e.querySelector(`[data-k="cor2"]`).value=c.cor2);let l=await x(`/leads/${encodeURIComponent(a.place_id)}/logo`,{method:`PUT`,body:{image:s.toDataURL(`image/png`),publish:!1}});if(Object.assign(a,l.lead),_.value=`logo.png`,S.value=``,w(),g(!0),n.has_github&&U(a,n))return oe(!1,`${r} aplicados e publicados: o link dele mostra em 1 a 2 minutos.`);Object.assign(a,await x(`/leads/${encodeURIComponent(a.place_id)}`,{method:`PUT`,body:{demo:u()}})),N(`${r} aplicados neste cliente.`,`success`)}catch(e){N(e.message||`Não consegui ler essa imagem.`,`error`)}}let D=0,O=!1,k=!1,A=e.querySelector(`[data-insta-import]`),j=e.querySelector(`[data-insta-auto]`),M=()=>{clearTimeout(D),D=0,O=!1,A&&(A.disabled=!1,b(A,v`${y(`download`)}Importar @`)),j&&(j.disabled=!1,b(j,v`${y(`sparkles`)}Auto-aplicar 1º do Instagram`))};async function P(t=!1){if(!a){t&&N(`Escolha um cliente primeiro.`,`error`);return}j&&(j.disabled=!0,b(j,v`${y(`loader`)}Aplicando 1º do Instagram…`));let r=e.querySelector(`[data-insta]`),i=r?r.value.replace(/^@/,``).trim():``;if(i&&i!==(a.insta||``))try{Object.assign(a,await x(`/leads/${encodeURIComponent(a.place_id)}`,{method:`PUT`,body:{insta:i}}))}catch{}t&&N(`Localizando 1º perfil do Instagram e extraindo cores…`,`info`);try{let t=await x(`/leads/${encodeURIComponent(a.place_id)}/auto-insta`,{method:`POST`,body:{}});if(Object.assign(a,t.lead),a.insta&&r&&(r.value=`@${a.insta}`),a.demo&&a.demo.cor){let t=e.querySelector(`[data-k="cor"]`);t&&(t.value=`#${a.demo.cor.replace(`#`,``)}`)}if(a.demo&&a.demo.cor2){let t=e.querySelector(`[data-k="cor2"]`);t&&(t.value=`#${a.demo.cor2.replace(`#`,``)}`)}_.value=`logo.png`,S.value=``,w(),g(!0),M(),N(`Logo e cores de @${t.result.handle||a.insta||a.name} aplicados automaticamente!`,`success`);return}catch(e){let r=(document.documentElement.dataset.radarExt||`0`).split(`.`).map(Number);if(r[0]>1||r[0]===1&&(r[1]||0)>=5){O=!0,k=t,window.postMessage({radar:`insta-search`,job:{name:a.name,city:n.city||``,place_id:a.place_id,handle:i||a.insta||``}},location.origin),clearTimeout(D),D=setTimeout(()=>{let e=k;M(),e&&N(`O Instagram não respondeu a tempo.`,`error`)},3e4);return}M(),t&&N(e.message,`error`)}}async function F(){let t=(document.documentElement.dataset.radarExt||`0`).split(`.`).map(Number);if(t[0]<1||t[0]===1&&(t[1]||0)<5)return N(`Atualize a extensão do Radar: ↻ em chrome://extensions e depois F5 aqui.`,`error`);try{Object.assign(a,await x(`/leads/${encodeURIComponent(a.place_id)}`,{method:`PUT`,body:{insta:e.querySelector(`[data-insta]`).value}}))}catch(e){return N(e.message,`error`)}if(!a.insta)return N(`Digite o Instagram dele (@usuario) ou use "Escolher no Instagram".`,`error`);A&&(A.disabled=!0,b(A,v`${y(`loader`)}Buscando…`)),window.postMessage({radar:`instagram`,job:{handle:a.insta,place_id:a.place_id}},location.origin),D=setTimeout(()=>{M(),N(`O Instagram não respondeu. Tente de novo.`,`error`)},45e3)}let ee=[];function te(t=``){let r=(document.documentElement.dataset.radarExt||`0`).split(`.`).map(Number);if(r[0]<1||r[0]===1&&(r[1]||0)<5)return N(`Atualize a extensão do Radar: ↻ em chrome://extensions e depois F5 aqui.`,`error`);if(!a)return N(`Escolha um cliente primeiro.`,`error`);let i=null,o=document.createElement(`div`);o.className=`insta-chooser`,b(o,v`
@@ -386,7 +386,7 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
         </div>`:``}
         ${e.map(e=>v`
         <div class="li" style="display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:var(--card-bg)">
-          <img src="${e.image||``}" alt="@${e.handle}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;background:#222;flex-shrink:0;border:2px solid var(--border)">
+          <img src="${e.image||``}" alt="@${e.handle}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;background:var(--panel-3);flex-shrink:0;border:2px solid var(--border)">
           <div style="flex:1;min-width:0">
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
               <b style="font-size:14px">${e.name||e.handle}</b>
@@ -406,7 +406,7 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
     <div class="page-head">
       <div>
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-          <span class="badge" style="background:rgba(212,175,55,0.15);color:#D4AF37;border:1px solid rgba(212,175,55,0.3)">
+          <span class="badge" style="background:rgba(212,175,55,0.15);color:#fcd34d;border:1px solid rgba(212,175,55,0.3)">
             ★ Estilo Clínica Viotto
           </span>
           <span class="badge good">Expo Glass Nav</span>
@@ -461,10 +461,10 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
             <div class="field full">
               <span>Logo da Clínica / Monograma</span>
               <div class="logo-drop" data-logo-drop style="background:rgba(212,175,55,0.03);border:1.5px dashed rgba(212,175,55,0.3);border-radius:16px;padding:14px">
-                <span class="logo-prev" data-logo-prev style="width:52px;height:52px;border-radius:50%;border:1.5px solid rgba(212,175,55,0.4);background-size:cover;background-position:center;background-color:#111"></span>
+                <span class="logo-prev" data-logo-prev style="width:52px;height:52px;border-radius:50%;border:1.5px solid rgba(212,175,55,0.4);background-size:cover;background-position:center;background-color:var(--panel-3)"></span>
                 <div style="flex:1;min-width:0">
-                  <b style="font-size:13.5px;color:#FBFBFC">${l?`Cole o logo aqui (Ctrl+V) ou copie do Instagram`:`Selecione um lead`}</b>
-                  <small style="display:block;margin-top:2px;color:#A09E98">
+                  <b style="font-size:13.5px;color:var(--ink)">${l?`Cole o logo aqui (Ctrl+V) ou copie do Instagram`:`Selecione um lead`}</b>
+                  <small style="display:block;margin-top:2px;color:var(--faint)">
                     No Instagram ou Google Imagens: clique com botão direito na foto/logo › <b>Copiar imagem</b> › volte aqui e aperte <b>Ctrl+V</b>.
                   </small>
                   ${l?v`
@@ -514,14 +514,14 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
 
       <!-- Coluna da Direita: iPhone Mockup com Live Preview -->
       <div style="display:flex;flex-direction:column;align-items:center">
-        <div style="position:relative;width:375px;height:780px;border-radius:50px;border:12px solid #141416;background:#070709;box-shadow:0 24px 60px rgba(0,0,0,0.7), inset 0 0 0 2px rgba(255,255,255,0.15);overflow:hidden">
+        <div style="position:relative;width:375px;height:780px;border-radius:50px;border:12px solid var(--ink);background:var(--panel-3);box-shadow:0 24px 60px rgba(0,0,0,0.7), inset 0 0 0 2px rgba(255,255,255,0.15);overflow:hidden">
           <!-- Dynamic Island / Notch -->
-          <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:115px;height:26px;background:#000;border-radius:20px;z-index:20;display:flex;align-items:center;justify-content:center">
-            <div style="width:10px;height:10px;border-radius:50%;background:#111;margin-right:6px"></div>
-            <div style="width:7px;height:7px;border-radius:50%;background:#090930"></div>
+          <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:115px;height:26px;background:var(--panel-3);border-radius:20px;z-index:20;display:flex;align-items:center;justify-content:center">
+            <div style="width:10px;height:10px;border-radius:50%;background:var(--panel-3);margin-right:6px"></div>
+            <div style="width:7px;height:7px;border-radius:50%;background:var(--acc-deep)"></div>
           </div>
           <!-- Live Iframe -->
-          <iframe data-clinic-preview title="Prévia do Site Clínica Viotto" style="width:100%;height:100%;border:0;background:#070709"></iframe>
+          <iframe data-clinic-preview title="Prévia do Site Clínica Viotto" style="width:100%;height:100%;border:0;background:var(--panel-3)"></iframe>
         </div>
         <p class="dim" style="font-size:12px;margin-top:10px;text-align:center">
           📱 <b>Prévia ao Vivo</b> · Simulação exata de navegação no iPhone com botões liquid glass.
@@ -675,7 +675,7 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
           <iframe
             id="checkout-preview-frame"
             src="${d()}checkout.html?v=${Date.now()}"
-            style="width:100%;height:680px;border:1px solid var(--border);border-radius:14px;background:#f2f9f7"
+            style="width:100%;height:680px;border:1px solid var(--border);border-radius:14px;background:var(--panel-2)"
             title="Prévia do Checkout YuvexPay"
           ></iframe>
         </div>
@@ -700,7 +700,7 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
                 <div style="font-size:11.5px;color:var(--muted)">${e.paymentMethod||`PIX`} • ${e.status}</div>
               </div>
               <div style="text-align:right">
-                <div style="font-weight:700;color:#34d399">${O(e.amount)}</div>
+                <div style="font-weight:700;color:#6ee7b7">${O(e.amount)}</div>
               </div>
             </div>
           `)}
@@ -815,7 +815,7 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
 
             <div style="display:flex;gap:8px;align-items:center;margin-top:4px">
               ${o.running?v`
-                <button class="btn btn-ghost" id="btn-stop-extract" style="width:100%;justify-content:center;border-color:#ef4444;color:#ef4444">
+                <button class="btn btn-ghost" id="btn-stop-extract" style="width:100%;justify-content:center;border-color:rgba(255,138,92,.42);color:#ffa88a">
                   ${y(`stop`)}Parar Extração em Andamento
                 </button>
               `:v`
@@ -833,7 +833,7 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
                 </div>
                 <div id="ext-progress-wrap" style="margin-top:8px;${o.running?``:`display:none`}">
                   <div style="height:7px;border-radius:4px;background:rgba(255,255,255,0.08);overflow:hidden">
-                    <div id="ext-progress-bar" style="height:100%;background:linear-gradient(90deg,#10b981,#34d399);width:${o.progress_percent||0}%;transition:width 0.3s ease"></div>
+                    <div id="ext-progress-bar" style="height:100%;background:linear-gradient(90deg,#1f9d6b,#1f9d6b);width:${o.progress_percent||0}%;transition:width 0.3s ease"></div>
                   </div>
                   <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;font-size:11px" class="dim">
                     <span>⚡ Progresso em tempo real (Nunca trava)</span>
@@ -877,7 +877,7 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
             </div>
 
             <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;cursor:pointer;background:rgba(16,185,129,0.08);padding:9px 12px;border-radius:8px;border:1px solid rgba(16,185,129,0.25);margin-top:2px">
-              <input type="checkbox" id="quick-only-no-site" ${C?`checked`:``} style="width:17px;height:17px;accent-color:#10b981;cursor:pointer">
+              <input type="checkbox" id="quick-only-no-site" ${C?`checked`:``} style="width:17px;height:17px;accent-color:#6ee7b7;cursor:pointer">
               <span>🎯 Enviar SOMENTE para quem NÃO tem site próprio (${E.sem_site_novos||0} na fila)</span>
             </label>
             <small class="dim" style="font-size:11.5px;line-height:1.4">
@@ -892,7 +892,7 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
               <div style="padding:10px 12px;border-radius:8px;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.25);font-size:12.5px">
                 <div style="margin-bottom:6px"><b>Status:</b> ${s.message}</div>
                 <div style="display:flex;justify-content:space-between;margin-bottom:8px" class="dim">
-                  <span>Enviados: <b style="color:#10b981">${s.sent||0}</b> / <b>${s.total||0}</b></span>
+                  <span>Enviados: <b style="color:#6ee7b7">${s.sent||0}</b> / <b>${s.total||0}</b></span>
                   <span>Atual: <b>${s.current_lead||`-`}</b></span>
                 </div>
                 <div style="display:flex;gap:8px">
@@ -920,7 +920,7 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
 
           <div style="display:inline-flex;gap:4px;padding:3px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid var(--border)">
             <button class="chip ${S===`todos`?`active`:``}" data-web="todos" style="font-size:11.5px">Todos Sites</button>
-            <button class="chip ${S===`sem_site`?`active`:``}" data-web="sem_site" style="font-size:11.5px;${S===`sem_site`?`background:rgba(16,185,129,0.2);border-color:#10b981;color:#10b981;font-weight:700`:``}">🎯 Sem Site Próprio (${E.sem_site||0})</button>
+            <button class="chip ${S===`sem_site`?`active`:``}" data-web="sem_site" style="font-size:11.5px;${S===`sem_site`?`background:rgba(16,185,129,0.2);border-color:rgba(52,211,153,.4);color:#6ee7b7;font-weight:700`:``}">🎯 Sem Site Próprio (${E.sem_site||0})</button>
             <button class="chip ${S===`com_site`?`active`:``}" data-web="com_site" style="font-size:11.5px">🌐 Com Site (${E.com_site||0})</button>
           </div>
 
@@ -941,11 +941,11 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
                     <span class="badge" style="font-size:11px">📂 ${e.list_name||`Geral`}</span>
                     <span class="badge ${e.status===`enviado`?`good`:e.status===`erro`||e.status===`duplicado`?`warning`:``}">${e.status}</span>
                     ${e.has_website?v`
-                      <span class="badge warning" style="font-size:11px;background:rgba(245,158,11,0.12);color:#f59e0b;border:1px solid rgba(245,158,11,0.25)">
+                      <span class="badge warning" style="font-size:11px;background:rgba(245,158,11,0.12);color:#fcd34d;border:1px solid rgba(245,158,11,0.25)">
                         🌐 Tem site: <a href="${e.website}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline">${(e.website||``).replace(/^https?:\/\/(www\.)?/,``).slice(0,24)}</a>
                       </span>
                     `:v`
-                      <span class="badge good" style="font-size:11px;background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3)">
+                      <span class="badge good" style="font-size:11px;background:rgba(16,185,129,0.15);color:#6ee7b7;border:1px solid rgba(16,185,129,0.3)">
                         🎯 Sem site próprio (${e.website_kind||`Sem site`})
                       </span>
                     `}
@@ -956,7 +956,7 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
                     ${e.category?v`<span>· ${e.category}</span>`:``}
                     ${e.city?v`<span>· ${e.city}</span>`:``}
                   </div>
-                  ${e.error_message?v`<div style="color:#ef4444;font-size:12px;margin-top:2px">${e.error_message}</div>`:``}
+                  ${e.error_message?v`<div style="color:#ffa88a;font-size:12px;margin-top:2px">${e.error_message}</div>`:``}
                 </div>
                 <div style="display:flex;gap:6px">
                   <button class="btn-icon sm" data-copy-email="${e.email}" title="Copiar e-mail">${y(`copy`)}</button>
@@ -1088,14 +1088,14 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
           <p class="sub">Todas as suas caixas de e-mail conectadas. O Radar rotaciona entre elas para multiplicar os disparos diários com segurança anti-spam.</p>
         </div>
         <div class="head-actions" style="display:flex;gap:10px;flex-wrap:wrap">
-          <button class="btn btn-primary" id="btn-add-starnet" style="background:#10b981;border-color:#10b981;color:#fff;display:inline-flex;align-items:center;gap:6px">
+          <button class="btn btn-primary" id="btn-add-starnet" style="background:#1f9d6b;border-color:rgba(52,211,153,.4);color:#fff;display:inline-flex;align-items:center;gap:6px">
             ${y(`plus`)}Adicionar Caixa Própria
           </button>
           <a href="https://webmail.web-starnet.tech" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="display:inline-flex;align-items:center;gap:6px">
             ${y(`external`)}Abrir Webmail
           </a>
           <button class="btn btn-secondary" id="btn-add-account">${y(`plus`)}Adicionar Gmail / SMTP</button>
-          <button class="btn btn-ghost" id="btn-ms-oauth" style="color:#38bdf8;border-color:rgba(56,189,248,0.3);display:inline-flex;align-items:center;gap:6px">
+          <button class="btn btn-ghost" id="btn-ms-oauth" style="color:#5eead4;border-color:rgba(56,189,248,0.3);display:inline-flex;align-items:center;gap:6px">
             <svg width="14" height="14" viewBox="0 0 23 23" fill="none"><rect width="11" height="11" fill="#f35325"/><rect x="12" width="11" height="11" fill="#81bc06"/><rect y="12" width="11" height="11" fill="#05a6f0"/><rect x="12" y="12" width="11" height="11" fill="#ffba08"/></svg>
             Conectar Microsoft
           </button>
@@ -1106,15 +1106,15 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
       <div class="card" style="margin-bottom:16px;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.35)">
         <div class="card-head" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
           <div style="display:flex;align-items:center;gap:10px">
-            <span style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;background:rgba(16,185,129,0.2);color:#10b981">
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;background:rgba(16,185,129,0.2);color:#6ee7b7">
               ${y(`shield`)}
             </span>
             <div>
-              <h3 style="color:#10b981;margin:0">Infraestrutura Própria: 5 Domínios Ativos</h3>
+              <h3 style="color:#6ee7b7;margin:0">Infraestrutura Própria: 5 Domínios Ativos</h3>
               <small class="dim">100% no seu servidor VPS próprio. SPF, DKIM 2048-bit, DMARC e PTR ativos em todos os domínios.</small>
             </div>
           </div>
-          <a href="https://webmail.web-starnet.tech" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="display:inline-flex;align-items:center;gap:6px;border-color:#10b981;color:#10b981">
+          <a href="https://webmail.web-starnet.tech" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="display:inline-flex;align-items:center;gap:6px;border-color:rgba(52,211,153,.4);color:#6ee7b7">
             ${y(`external`)}Acessar Webmail (Roundcube)
           </a>
         </div>
@@ -1163,7 +1163,7 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
                     Método: <code>${t?`Microsoft Graph API (HTTPS)`:`${e.smtp_host}:${e.smtp_port} (${e.use_ssl?`SSL`:`TLS`})`}</code>
                     ${e.last_sent_at?v`· Último envio: <b>${e.last_sent_at.slice(11,19)}</b>`:``}
                   </div>
-                  ${e.last_error?v`<div style="color:#ef4444;font-size:12px;margin-top:4px">${e.last_error}</div>`:``}
+                  ${e.last_error?v`<div style="color:#ffa88a;font-size:12px;margin-top:4px">${e.last_error}</div>`:``}
                 </div>
 
                 <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -1194,7 +1194,7 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
         <p style="margin-bottom:12px">
           Conecte sua conta pessoal <b>@outlook.com</b> ou <b>@hotmail.com</b> diretamente pelos servidores oficiais da Microsoft com autorização OAuth 2.0.
         </p>
-        <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:8px;padding:12px;margin-bottom:14px;color:#10b981">
+        <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:8px;padding:12px;margin-bottom:14px;color:#6ee7b7">
           ✓ <b>100% Grátis:</b> Não exige Azure nem cartão.<br>
           ✓ <b>Sem bloqueio de SMTP:</b> Usa a Graph API oficial da Microsoft.<br>
           ✓ <b>Zero configuração:</b> Basta fazer login e clicar em "Sim".
@@ -1305,7 +1305,7 @@ var e=Object.defineProperty,t=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],en
               <div>
                 <span class="dim" style="font-size:12.5px;display:block;margin-bottom:6px">Clique para inserir dados automáticos do cliente:</span>
                 <div style="display:flex;gap:6px;flex-wrap:wrap">
-                  <button class="chip" type="button" data-var="[Tratamento]" style="border-color:rgba(225,29,72,0.35);color:#fda4af">🩺 [Tratamento] (Dr./Dra.)</button>
+                  <button class="chip" type="button" data-var="[Tratamento]" style="border-color:rgba(255,138,92,0.35);color:#fda4af">🩺 [Tratamento] (Dr./Dra.)</button>
                   <button class="chip" type="button" data-var="[Nome]">👤 [Nome]</button>
                   <button class="chip" type="button" data-var="[Nome da Empresa]">🏢 [Nome da Empresa]</button>
                   <button class="chip" type="button" data-var="@{username}">📸 @{username}</button>
@@ -1391,8 +1391,8 @@ João Pedro`;t.unshift({id:0,title:`Novo Modelo - Consultórios (Dra./Dr.)`,subj
           </div>
 
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;font-size:13px;color:var(--ez-tx2);margin-bottom:14px">
-            <div>Enviados com sucesso: <b style="color:#10b981">${a.sent||0}</b> / <b>${a.total||0}</b></div>
-            <div>Falhas de envio: <b style="color:#ef4444">${a.failed||0}</b></div>
+            <div>Enviados com sucesso: <b style="color:#6ee7b7">${a.sent||0}</b> / <b>${a.total||0}</b></div>
+            <div>Falhas de envio: <b style="color:#ffa88a">${a.failed||0}</b></div>
             <div>Lead em processo: <b>${a.current_lead||`-`}</b></div>
             <div>Conta remetente: <b>${a.current_account||`-`}</b></div>
           </div>
@@ -1489,7 +1489,7 @@ João Pedro`;t.unshift({id:0,title:`Novo Modelo - Consultórios (Dra./Dr.)`,subj
                     <td style="padding:8px">${e.subject}</td>
                     <td style="padding:8px">
                       <span class="badge ${e.status===`sent`?`good`:`warning`}">${e.status===`sent`?`Enviado`:`Falha`}</span>
-                      ${e.error_message?v`<small class="dim" style="display:block;color:#ef4444">${e.error_message}</small>`:``}
+                      ${e.error_message?v`<small class="dim" style="display:block;color:#ffa88a">${e.error_message}</small>`:``}
                     </td>
                   </tr>
                 `)}
@@ -1574,7 +1574,7 @@ João Pedro`;t.unshift({id:0,title:`Novo Modelo - Consultórios (Dra./Dr.)`,subj
               </select>
             </div>
           `:``}
-          <button class="btn btn-primary" id="btn-refresh" style="background:#10b981;border-color:#10b981;display:inline-flex;align-items:center;gap:6px">
+          <button class="btn btn-primary" id="btn-refresh" style="background:#1f9d6b;border-color:rgba(52,211,153,.4);display:inline-flex;align-items:center;gap:6px">
             ${y(`refresh`)}Atualizar Caixa
           </button>
           <a href="https://webmail.web-starnet.tech" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="display:inline-flex;align-items:center;gap:6px">
@@ -1597,7 +1597,7 @@ João Pedro`;t.unshift({id:0,title:`Novo Modelo - Consultórios (Dra./Dr.)`,subj
         </div>
         <div class="card" style="padding:16px;background:var(--card-bg);border:1px solid var(--border);border-radius:12px">
           <div class="dim" style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px">Leads Identificados</div>
-          <div style="font-size:26px;font-weight:700;margin-top:4px;color:#38bdf8">${s}</div>
+          <div style="font-size:26px;font-weight:700;margin-top:4px;color:#5eead4">${s}</div>
         </div>
         <div class="card" style="padding:16px;background:var(--card-bg);border:1px solid var(--border);border-radius:12px">
           <div class="dim" style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px">Contas Monitoradas</div>
@@ -1647,11 +1647,11 @@ João Pedro`;t.unshift({id:0,title:`Novo Modelo - Consultórios (Dra./Dr.)`,subj
                       </span>
 
                       ${t?v`
-                        <span style="background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.35);color:#38bdf8;padding:2px 8px;border-radius:6px;font-size:11.5px;font-weight:600;display:inline-flex;align-items:center;gap:4px">
+                        <span style="background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.35);color:#5eead4;padding:2px 8px;border-radius:6px;font-size:11.5px;font-weight:600;display:inline-flex;align-items:center;gap:4px">
                           ${y(`user`)}Lead: ${t.full_name||t.username||`Identificado`}
                         </span>
                         ${t.username?v`
-                          <a href="https://instagram.com/${t.username}" target="_blank" rel="noopener noreferrer" style="color:#e1306c;font-size:12px;text-decoration:none;font-weight:600" onclick="event.stopPropagation()">
+                          <a href="https://instagram.com/${t.username}" target="_blank" rel="noopener noreferrer" style="color:#f0abfc;font-size:12px;text-decoration:none;font-weight:600" onclick="event.stopPropagation()">
                             📸 @${t.username}
                           </a>
                         `:``}
@@ -1672,7 +1672,7 @@ João Pedro`;t.unshift({id:0,title:`Novo Modelo - Consultórios (Dra./Dr.)`,subj
 
                 <div style="display:flex;gap:8px;align-items:center" onclick="event.stopPropagation()">
                   ${r?v`
-                    <a href="${r}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="color:#22c55e;border-color:rgba(34,197,94,0.3);display:inline-flex;align-items:center;gap:4px" title="Chamar no WhatsApp">
+                    <a href="${r}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="color:#6ee7b7;border-color:rgba(34,197,94,0.3);display:inline-flex;align-items:center;gap:4px" title="Chamar no WhatsApp">
                       ${y(`chat`)}WhatsApp
                     </a>
                   `:``}
@@ -1697,16 +1697,16 @@ João Pedro`;t.unshift({id:0,title:`Novo Modelo - Consultórios (Dra./Dr.)`,subj
         ${r?v`
           <div style="background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.3);border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
             <div>
-              <div style="font-weight:600;color:#38bdf8;font-size:14px">
+              <div style="font-weight:600;color:#5eead4;font-size:14px">
                 👤 Lead Reconhecido: ${r.full_name||r.username||`Cliente`}
               </div>
               <div style="font-size:12.5px;color:var(--ez-tx2);margin-top:2px">
                 Categoria: <b>${r.category||`Geral`}</b> · Cidade: <b>${r.city||`—`}</b>
-                ${r.username?v` · Instagram: <a href="https://instagram.com/${r.username}" target="_blank" rel="noopener noreferrer" style="color:#e1306c;font-weight:600">@${r.username}</a>`:``}
+                ${r.username?v` · Instagram: <a href="https://instagram.com/${r.username}" target="_blank" rel="noopener noreferrer" style="color:#f0abfc;font-weight:600">@${r.username}</a>`:``}
               </div>
             </div>
             ${a?v`
-              <a href="${a}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" style="background:#22c55e;border-color:#22c55e;color:#fff;display:inline-flex;align-items:center;gap:4px">
+              <a href="${a}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" style="background:#1f9d6b;border-color:rgba(52,211,153,.4);color:#fff;display:inline-flex;align-items:center;gap:4px">
                 ${y(`chat`)}Abrir no WhatsApp
               </a>
             `:``}

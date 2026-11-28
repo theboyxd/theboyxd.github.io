@@ -557,6 +557,7 @@ async function pegaCentral(forcar) {
   const d = await call('central', { forcar });
   if (!d || d.erro) throw new Error('A Central não conseguiu falar com os apps agora.');
   CEN = { em: Date.now(), d };
+  atualizaChip(d);
   return d;
 }
 let VIS = null;
@@ -573,15 +574,19 @@ async function pegaPratos() {
 }
 
 // ---- casca: menu lateral (computador), barra de baixo (celular) e a área onde os apps abrem
-const NAV = [['inicio', 'Início', 'home', 'Início'], ['amazon', 'Loja Amazon', 'cart', 'Loja'], ['radar', 'Novos clientes', 'radar', 'Clientes'],
-  ['ia', 'Modelos de IA', 'person', 'Modelos'], ['projetos', 'Projetos', 'grid', 'Projetos']];
+// ---- casca (Central v3 · RED TEAM): trilho de áreas + UM painel com as páginas da área aberta + barra de cima + Ctrl K.
+// Nada de sanfona. No celular: barra de baixo (as áreas) e uma folha com as páginas da área (botão da barra de cima).
+const NAV = [['inicio', 'Início', 'home'], ['amazon', 'Loja', 'cart'], ['radar', 'Clientes', 'radar'], ['ia', 'IA', 'sparkles'], ['projetos', 'Projetos', 'grid']];
+const NAV_BAIXO = [['acesso', 'Acesso', 'shield']];
+const AREA = { inicio: ['Início', 'inicio', 'o dia em um olhar'], amazon: ['Loja Amazon', 'loja', 'vende e envia'], radar: ['Novos clientes', 'clientes', 'acha quem comprar'], ia: ['Modelos de IA', 'ia', 'cria o conteúdo'], projetos: ['Projetos', 'projetos', 'o que você vende'], acesso: ['Acesso', 'acesso', 'quem está dentro'] };
+const PAGINAS_FIXAS = { acesso: [{ caminho: '/', nome: 'Aparelhos conectados', ic: 'shield' }] };
 // Apps que moram na Central: as telas vêm de apps/<id>.js (montadas de Star-net/star-net-central) e falam com o app
 // pela ponte (ação "app" do servidor do painel). Endereços: #/amazon/produtos, #/radar/clientes…
 const VERSAO = new URL(import.meta.url).searchParams.get('v') || '';
 const MODS = { amazon: { arquivo: 'apps/amazon.js', nome: 'Loja Amazon' }, radar: { arquivo: 'apps/radar.js', nome: 'Novos clientes' }, ia: { arquivo: 'apps/ia.js', nome: 'Modelos de IA' } };
-const MOD_P = {}; let MOD_ATUAL = ''; let ALERTAS_EM = 0;
+const MOD_P = {}; const MOD_OBJ = {}; const MOD_MENU = {}; let MOD_ATUAL = ''; let ALERTAS_EM = 0;
 function modulo(id) {
-  if (!MOD_P[id]) MOD_P[id] = import('./' + MODS[id].arquivo + (VERSAO ? '?v=' + VERSAO : '')).catch((e) => { delete MOD_P[id]; throw e; });
+  if (!MOD_P[id]) MOD_P[id] = import('./' + MODS[id].arquivo + (VERSAO ? '?v=' + VERSAO : '')).then((m) => { MOD_OBJ[id] = m; MOD_MENU[id] = m.MENU || []; if (SH && SH.raiz.isConnected) atualizaCtx(); return m; }).catch((e) => { delete MOD_P[id]; throw e; });
   return MOD_P[id];
 }
 function icApp(name) { // ícones das telas dos apps (apps/icones.svg)
@@ -590,82 +595,121 @@ function icApp(name) { // ícones das telas dos apps (apps/icones.svg)
   return s;
 }
 let SH = null; let ROTA = 'inicio'; let VOLTAR = 'inicio';
-const ABERTOS = new Map(); // id do app → { frame, a }
 const VISTAS = {};
 
 function casca() {
   if (SH && SH.raiz.isConnected) return SH;
-  ABERTOS.clear();
-  const marca = () => h('div', { class: 'cx-brand' }, h('img', { src: 'simbolo.png', alt: '', width: 28, height: 36 }),
-    h('div', {}, h('b', {}, 'Star-net', h('em', { text: '.pro' })), h('small', { text: 'Central' })));
-  const abertos = h('div', { class: 'nv-abertos' });
-  const boxAbertos = h('div', { class: 'cx-abertos', hidden: true }, h('small', { class: 'cx-lab', text: 'Abertos agora' }), abertos);
-  const subs = {};
-  const itens = NAV.map(([id, t, icone]) => {
-    const b = h('button', { type: 'button', class: 'nv', 'data-r': id, onclick: () => ir(id, true) }, ic(icone), h('span', { text: t }));
-    if (!MODS[id]) return b;
-    subs[id] = h('div', { class: 'nv-sub', hidden: true, 'data-sub': id });
-    return [b, subs[id]];
-  });
-  const side = h('aside', { class: 'cx-side' }, marca(),
-    h('nav', { class: 'cx-nav', 'aria-label': 'Seções' }, itens),
-    boxAbertos,
-    h('div', { class: 'cx-foot' },
-      h('button', { type: 'button', class: 'nv', onclick: connectDrawer }, ic('phone'), h('span', { text: 'Conectar aparelho' })),
-      h('button', { type: 'button', class: 'nv', onclick: sairView }, ic('out'), h('span', { text: 'Sair' }))));
-  const topo = h('header', { class: 'cx-top' }, marca(),
-    h('button', { class: 'btn ghost icon-btn', type: 'button', 'aria-label': 'Conectar aparelho', title: 'Conectar aparelho', onclick: connectDrawer }, ic('phone')),
-    h('button', { class: 'btn ghost icon-btn', type: 'button', 'aria-label': 'Sair', title: 'Sair', onclick: sairView }, ic('out')));
+  const botaoArea = (tag) => ([id, nome, icone]) => h('button', { type: 'button', class: tag === 'rb' ? 'rb' : '', 'data-r': id, onclick: () => { fechaFolha(); ir(id, true); } }, icApp(icone), h('span', { text: nome }), h('i', { class: 'bd', hidden: true }));
+  const rail = h('aside', { class: 'rl', 'aria-label': 'Áreas' },
+    h('button', { type: 'button', class: 'lg', title: 'Star-net.pro', 'aria-label': 'Início', onclick: () => ir('inicio', true) }, h('img', { src: 'simbolo.png', alt: '', width: 36, height: 46 })),
+    NAV.map(botaoArea('rb')), h('span', { class: 'sp' }), NAV_BAIXO.map(botaoArea('rb')));
+  const cp = h('aside', { class: 'cp', 'aria-label': 'Páginas da área', hidden: true });
+  const cr = h('div', { class: 'cr' });
+  const pgb = h('button', { type: 'button', class: 'pgb', 'aria-label': 'Páginas desta área', hidden: true, onclick: () => document.body.classList.toggle('fl-open') }, icApp('menu'), h('span'));
+  const cmd = h('button', { type: 'button', class: 'cmd', 'aria-label': 'Buscar ou executar (Ctrl K)', onclick: () => abrePaleta() }, icApp('search'), h('span', { text: 'Buscar ou executar…' }), h('kbd', { text: 'Ctrl K' }));
+  const chip = h('span', { class: 'sc', hidden: true }, h('i'), h('span'));
+  const gpu = h('button', { type: 'button', class: 'sc gpu', hidden: true, title: 'Máquina de vídeo (RunPod)', onclick: () => ir('ia/conexoes', true) }, h('i'), h('span'));
+  const topo = h('header', { class: 'tp' }, h('div', { class: 'brand3' }, h('img', { src: 'simbolo.png', alt: '', width: 26, height: 33 }), 'Star-net', h('em', { text: '.pro' })), cr, pgb, cmd, gpu, chip);
   const vista = h('main', { class: 'cx-view', id: 'vista', tabindex: '-1' });
-  const wsBar = h('header', { class: 'ws-bar' });
-  const frames = h('div', { class: 'ws-frames' });
-  const trabalho = h('section', { class: 'cx-work', hidden: true, 'aria-label': 'App aberto' }, wsBar, frames);
-  const abas = h('nav', { class: 'cx-tabs', 'aria-label': 'Seções' }, NAV.map(([id, , icone, curto]) => h('button', { type: 'button', class: 'tb', 'data-r': id, onclick: () => ir(id, true) }, ic(icone), h('span', { text: curto }))));
-  const raiz = h('div', { class: 'cx' }, side, h('div', { class: 'cx-main' }, topo, vista, trabalho), abas);
+  const dock = h('nav', { class: 'dk', 'aria-label': 'Áreas' }, NAV.map(botaoArea('dk')));
+  const folha = h('div', { class: 'fl', role: 'dialog', 'aria-label': 'Páginas desta área' });
+  const raiz = h('div', { class: 'app3 sem-cp' }, rail, cp, h('div', { class: 'mn' }, topo, vista), dock, folha);
   $app.replaceChildren(raiz);
-  SH = { raiz, vista, trabalho, frames, wsBar, abertos, boxAbertos, subs };
+  SH = { raiz, vista, cp, cr, pgb, folha, chip, gpu, caminho: '/' };
+  Promise.allSettled(Object.keys(MODS).map(modulo)); // carrega as telas em segundo plano: o Ctrl K já conhece as páginas de cada área
+  pegaRunpod();
   return SH;
 }
-const secaoDe = (rota) => (rota.startsWith('app:') ? '' : rota.split(':')[0]);
-function marcaNav() {
-  const sec = secaoDe(ROTA);
-  for (const b of SH.raiz.querySelectorAll('[data-r]')) {
+const secaoDe = (rota) => rota.split(':')[0];
+const fechaFolha = () => document.body.classList.remove('fl-open');
+function paginasDe(sec) {
+  if (MODS[sec]) return (MOD_MENU[sec] || []).map((m) => ({ caminho: m.caminho, nome: m.nome, ic: m.ic }));
+  return PAGINAS_FIXAS[sec] || [];
+}
+function alvoDe(sec, caminho) { return sec + (MODS[sec] ? (caminho && caminho !== '/' ? caminho : '') : ''); }
+// o painel da área, a folha do celular, o caminho de pastas e as marcas de "aqui" do trilho e da barra de baixo
+function atualizaCtx() {
+  if (!SH || !SH.raiz.isConnected) return;
+  const s = SH, sec = secaoDe(ROTA), area = AREA[sec] || AREA.inicio, pgs = paginasDe(sec), mod = MOD_OBJ[sec];
+  for (const b of s.raiz.querySelectorAll('[data-r]')) {
     const on = b.dataset.r === sec; b.classList.toggle('on', on);
     if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   }
-  for (const b of SH.abertos.querySelectorAll('[data-app]')) b.classList.toggle('on', ROTA === 'app:' + b.dataset.app);
-  for (const [id, box] of Object.entries(SH.subs)) box.hidden = sec !== id || !box.childElementCount;
+  const varios = pgs.length > 1;
+  s.raiz.classList.toggle('sem-cp', !varios); s.cp.hidden = !varios; s.pgb.hidden = !varios;
+  const atual = pgs.find((p) => p.caminho === s.caminho) || pgs[0];
+  s.pgb.querySelector('span').textContent = atual ? atual.nome : area[0];
+  s.cr.replaceChildren('~/', h('b', { text: area[1] }), atual && varios ? '/' + slug(atual.nome) : '');
+  const item = (p) => h('button', { type: 'button', class: 'it' + (atual && p.caminho === atual.caminho ? ' on' : ''), 'data-c': p.caminho, 'aria-current': atual && p.caminho === atual.caminho ? 'page' : null, onclick: () => { fechaFolha(); ir(alvoDe(sec, p.caminho), true); } },
+    icApp(p.ic), h('span', { text: p.nome }), p.caminho === '/logistica' ? h('span', { class: 'ct', hidden: true }) : null);
+  const venda = () => (mod && mod.novaVenda ? h('button', { type: 'button', class: 'btn primary sm acao', onclick: () => { fechaFolha(); mod.novaVenda(); } }, icApp('plus'), h('span', { text: 'Registrar venda' })) : null);
+  s.cp.replaceChildren(...[h('h3', { text: area[0] }), h('div', { class: 'sub', text: area[2] }), venda(), ...pgs.map(item)].filter(Boolean));
+  s.folha.replaceChildren(...[h('h4', { text: area[0] }), venda(), ...pgs.map(item)].filter(Boolean));
+  if (mod && mod.alertas && ALERTAS_N != null) pintaAlertas(ALERTAS_N);
 }
-// "amazon/produtos?x=1" → { secao: 'amazon', caminho: '/produtos?x=1' }; "app/dads" → { secao: 'app', app: 'dads' }
+let ALERTAS_N = null;
+function pintaAlertas(n) {
+  ALERTAS_N = n;
+  for (const el of SH.raiz.querySelectorAll('[data-c="/logistica"] .ct')) { el.hidden = !n; el.textContent = n; el.title = n + (n === 1 ? ' produto para repor' : ' produtos para repor'); }
+  for (const el of SH.raiz.querySelectorAll('[data-r="amazon"] .bd')) { el.hidden = !n; el.textContent = n; }
+}
+let RP = null; let RP_T = 0;
+const usd = (v) => 'US$ ' + Number(v || 0).toFixed(2).replace('.', ',');
+async function pegaRunpod() { // lê o estado da máquina de vídeo; sem chave salva a Central não chama a RunPod nem insiste
+  clearTimeout(RP_T);
+  if (!sessao || !SH || !SH.raiz.isConnected) return;
+  try { const r = await call('iaRunpodEstado'); RP = r && r.runpod ? r.runpod : null; } catch (e) { if (e instanceof SessaoError) return; RP = null; }
+  atualizaGpu();
+  if (!RP || RP.estado === 'sem_chave') return;
+  const rapido = ['ligando', 'preparando', 'desligando'].includes(RP.estado);
+  RP_T = setTimeout(pegaRunpod, rapido ? 3000 : 20000);
+}
+function atualizaGpu() { // chip "GPU …": só aparece se há chave da RunPod
+  if (!SH || !SH.raiz.isConnected) return;
+  const c = SH.gpu, e = RP ? RP.estado : 'sem_chave';
+  c.hidden = !RP || e === 'sem_chave';
+  const rot = { sem_preparo: 'GPU não preparada', preparando: 'GPU preparando…', desligada: 'GPU desligada', ligando: 'GPU ligando…', ligada: 'GPU ligada' + (RP && RP.pod && RP.pod.custoHora ? ' · ' + usd(RP.pod.custoHora) + '/h' : ''), desligando: 'GPU desligando…', erro: 'GPU com problema' }[e] || 'GPU';
+  c.className = 'sc gpu' + (['ligada', 'ligando', 'preparando'].includes(e) ? ' hot' : e === 'erro' ? ' warn' : '');
+  c.lastChild.textContent = rot; c.title = (RP && RP.msg) || (RP && RP.aviso) || 'Máquina de vídeo (RunPod)';
+}
+async function ligaGpu() {
+  try { const r = await call('iaRunpodLigar'); if (r.erro) throw new Error(r.mensagem || 'A RunPod não ligou a máquina.'); toast('Ligando a máquina de vídeo. Ela cobra por hora enquanto estiver ligada.', 'ok', 4500); pegaRunpod(); } catch (e) { fail(e); }
+}
+async function desligaGpu() {
+  try {
+    let r = await call('iaRunpodDesligar');
+    if (r.erro === 'ocupado') { if (!(await confirma('Há um vídeo em andamento', (r.mensagem || 'Desligar agora cancela o vídeo.') + ' Desligar mesmo assim?', 'Desligar', true))) return; r = await call('iaRunpodDesligar', { forcar: true }); }
+    if (r.erro) throw new Error(r.mensagem || 'A RunPod não desligou a máquina.');
+    toast('Máquina de vídeo desligada.', 'ok'); pegaRunpod();
+  } catch (e) { fail(e); }
+}
+if (LOCAL) window.__snTeste = { gpu: (rp) => { RP = rp; atualizaGpu(); } }; // só no computador de teste (127.0.0.1): deixa o teste desenhar cada estado
+function atualizaChip(d) { // "tudo no ar" ou "N fora do ar", com o que o servidor já sabe dos apps
+  if (!SH || !SH.raiz.isConnected || !d || !d.status) return;
+  const fora = Object.values(d.status).filter((x) => x && x.ok === false).length;
+  SH.chip.hidden = false; SH.chip.className = 'sc ' + (fora ? 'warn' : 'ok'); SH.chip.lastChild.textContent = fora ? fora + ' fora do ar' : 'tudo no ar';
+}
+// "amazon/produtos?x=1" → { secao: 'amazon', caminho: '/produtos?x=1' }
 function analisa(r) {
   const m = /^([a-z]+)([/?].*)?$/.exec(String(r || ''));
   if (!m) return { secao: 'inicio' };
   let secao = m[1]; const resto = m[2] || '';
   if (secao === 'dropshipping') return { secao: 'amazon', caminho: '/' };
-  if (secao === 'apps' || secao === 'visitas') return { secao: 'projetos' }; // viraram parte de Projetos
-  if (secao === 'app') {
-    const id = resto.replace(/^\//, '').split(/[/?]/)[0];
-    if (MODS[id]) return { secao: id, caminho: '/' };
-    return APPS_C[id] ? { secao: 'app', app: id } : { secao: 'inicio' };
-  }
+  if (secao === 'apps' || secao === 'visitas') return { secao: 'projetos' };
+  if (secao === 'app') { const id = resto.replace(/^\//, '').split(/[/?]/)[0]; return MODS[id] ? { secao: id, caminho: '/' } : { secao: 'projetos' }; }
   if (MODS[secao]) return { secao, caminho: resto.startsWith('?') ? '/' + resto : (resto || '/') };
   if (!VISTAS[secao]) secao = 'inicio';
   return { secao };
 }
 function ir(r, empurra) {
-  const s = casca();
-  const a = String(r).startsWith('app:') ? analisa('app/' + String(r).slice(4)) : analisa(r);
-  const alvo = a.secao === 'app' ? '#/app/' + a.app : MODS[a.secao] ? '#/' + a.secao + (a.caminho === '/' ? '' : a.caminho) : '#/' + a.secao;
+  const s = casca(), a = analisa(r);
+  const alvo = '#/' + (MODS[a.secao] ? a.secao + (a.caminho === '/' ? '' : a.caminho) : a.secao);
   if (location.hash !== alvo) { try { history[empurra ? 'pushState' : 'replaceState'](null, '', alvo); } catch (e) { /* ok */ } }
   if (MOD_ATUAL && a.secao !== MOD_ATUAL) { const id = MOD_ATUAL; MOD_ATUAL = ''; modulo(id).then((m) => m.sai()).catch(() => {}); } // saiu do app
-  ROTA = a.secao === 'app' ? 'app:' + a.app : MODS[a.secao] ? a.secao + ':' + a.caminho : a.secao;
-  const app = a.secao === 'app' ? a.app : '';
-  s.vista.hidden = Boolean(app); s.trabalho.hidden = !app;
-  document.body.classList.toggle('em-app', Boolean(app));
-  marcaNav();
-  if (app) { mostraApp(app); return; }
+  ROTA = MODS[a.secao] ? a.secao + ':' + a.caminho : a.secao;
+  s.caminho = MODS[a.secao] ? menuDeLista(a.secao, a.caminho) : '/';
   VOLTAR = alvo.slice(2);
-  closeDrawer();
+  fechaFolha(); closeDrawer(); atualizaCtx();
   if (MODS[a.secao]) mostraModulo(a.secao, a.caminho);
   else VISTAS[a.secao](s.vista);
   window.scrollTo(0, 0);
@@ -679,50 +723,22 @@ function appView() {
 // links dentro das telas dos apps (#/amazon/garimpo/12) e o "voltar" do navegador
 window.addEventListener('hashchange', () => { if (SH && SH.raiz.isConnected && sessao) ir(rotaDoEndereco()); });
 
-// ---- apps que moram na Central (Painel Amazon e Radar)
-function menuDe(mod, caminho) {
-  const p = String(caminho || '/').split('?')[0].replace(/\/+$/, '') || '/';
-  const hit = mod.MENU.find((m) => (m.caminho === '/' ? p === '/' : p === m.caminho || p.startsWith(m.caminho + '/')));
+// ---- apps que moram na Central (Loja Amazon, Novos clientes, Modelos de IA)
+function menuDeLista(id, caminho) {
+  const p = String(caminho || '/').split('?')[0].replace(/\/+$/, '') || '/', menu = MOD_MENU[id] || [];
+  const hit = menu.find((m) => (m.caminho === '/' ? p === '/' : p === m.caminho || p.startsWith(m.caminho + '/')));
   return hit ? hit.caminho : '/';
 }
-function desenhaSub(id, mod, barra) {
-  const box = SH.subs[id];
-  const botao = (m, curto) => h('button', { type: 'button', class: curto ? '' : 'nv', 'data-c': m.caminho, onclick: () => ir(id + (m.caminho === '/' ? '' : m.caminho), true) },
-    icApp(m.ic), h('span', { text: m.nome }), m.caminho === '/logistica' ? h('span', { class: 'ct', hidden: true }) : null);
-  if (box && !box.childElementCount) {
-    let grupo = ''; const itens = [];
-    for (const m of mod.MENU) {
-      if (m.grupo && m.grupo !== grupo) { grupo = m.grupo; itens.push(h('small', { text: grupo })); }
-      itens.push(botao(m, false));
-    }
-    if (mod.novaVenda) itens.push(h('button', { type: 'button', class: 'nv nv-acao', onclick: () => mod.novaVenda() }, icApp('plus'), h('span', { text: 'Registrar venda' })));
-    box.replaceChildren(...itens);
-  }
-  if (barra && !barra.childElementCount) {
-    barra.replaceChildren(...mod.MENU.map((m) => botao(m, true)),
-      ...(mod.novaVenda ? [h('button', { type: 'button', class: 'acao', onclick: () => mod.novaVenda() }, icApp('plus'), h('span', { text: 'Venda' }))] : []));
-  }
-  marcaNav();
-}
-function marcaSub(id, caminho) {
-  for (const el of SH.raiz.querySelectorAll('[data-sub="' + id + '"] [data-c], .jx-pg[data-mod="' + id + '"] .jx-sub [data-c]')) {
-    const on = el.dataset.c === caminho; el.classList.toggle('on', on);
-    if (on) { el.setAttribute('aria-current', 'page'); if (el.parentElement.classList.contains('jx-sub')) el.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } else el.removeAttribute('aria-current');
-  }
-}
-function atualizaAlertas(mod, forcar) { // o número vermelho em "Logística e estoque" = produtos para repor agora
+function atualizaAlertas(mod, forcar) { // o número em "Estoque e compras" = produtos para repor agora
   if (!mod.alertas || (!forcar && Date.now() - ALERTAS_EM < 60000)) return;
   ALERTAS_EM = Date.now();
-  mod.alertas().then((n) => {
-    for (const el of SH.raiz.querySelectorAll('[data-c="/logistica"] .ct')) { el.hidden = !n; el.textContent = n; el.title = n + (n === 1 ? ' produto para repor' : ' produtos para repor'); }
-  }).catch(() => { ALERTAS_EM = 0; });
+  mod.alertas().then((n) => pintaAlertas(n)).catch(() => { ALERTAS_EM = 0; });
 }
 async function mostraModulo(id, caminho) {
   const s = casca(), minha = ROTA;
   let quadro = s.vista.firstElementChild;
   if (!quadro || quadro.dataset.mod !== id) {
-    quadro = h('div', { class: 'pg jx-pg', 'data-mod': id }, h('nav', { class: 'jx-sub', 'aria-label': MODS[id].nome }),
-      h('div', { class: 'jx jx-raiz' }, h('div', { class: 'jx-carrega' }, carregando(MODS[id].nome))));
+    quadro = h('div', { class: 'pg jx-pg', 'data-mod': id }, h('div', { class: 'jx jx-raiz' }, h('div', { class: 'jx-carrega' }, carregando(MODS[id].nome))));
     s.vista.replaceChildren(quadro);
   }
   const raiz = quadro.querySelector('.jx-raiz');
@@ -732,65 +748,96 @@ async function mostraModulo(id, caminho) {
     return;
   }
   if (ROTA !== minha) return;
-  MOD_ATUAL = id;
-  desenhaSub(id, mod, quadro.querySelector('.jx-sub'));
-  marcaSub(id, menuDe(mod, caminho));
+  MOD_ATUAL = id; s.caminho = menuDeLista(id, caminho); atualizaCtx();
   const marcado = await mod.mostra(raiz, caminho);
-  if (ROTA === minha) marcaSub(id, marcado);
+  if (ROTA === minha) { s.caminho = marcado || s.caminho; atualizaCtx(); }
   atualizaAlertas(mod);
 }
 
-// ---- área de trabalho: os apps que eu vendo abrem aqui dentro e continuam abertos quando você troca de tela
-function abrir(id, destino) {
-  if (MODS[id]) { ir(id + (destino && destino !== '/' ? destino : ''), true); return; }
-  const a = APPS_C[id]; if (!a || !a.url) return;
-  const s = casca();
-  let w = ABERTOS.get(id);
-  if (!w) {
-    const frame = h('iframe', { class: 'ws-frame', title: a.nome, referrerpolicy: 'no-referrer', allow: 'clipboard-write; fullscreen; camera; xr-spatial-tracking; gyroscope; accelerometer; magnetometer' });
-    frame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads'); // o app não consegue tirar você da Central
-    frame.addEventListener('load', () => frame.classList.remove('carregando'));
-    w = { frame, a }; ABERTOS.set(id, w); s.frames.append(frame);
-    carrega(id);
-  }
-  desenhaAbertos();
-  ir('app:' + id, true);
+// ---- janelas do app no lugar de confirm(): o navegador não sabe o que é a Central
+function dialogo({ titulo, texto, botoes, foco }) {
+  return new Promise((res) => {
+    const fecha = (v) => { document.removeEventListener('keydown', tecla, true); el.remove(); res(v); };
+    const tecla = (ev) => { if (ev.key === 'Escape') { ev.stopImmediatePropagation(); ev.preventDefault(); fecha(null); } };
+    const el = h('div', { class: 'dg', role: 'dialog', 'aria-modal': 'true', 'aria-label': titulo, onclick: (ev) => { if (ev.target === el) fecha(null); } },
+      h('div', { class: 'dgb' }, h('h3', { text: titulo }), texto ? h('p', { text: texto }) : null,
+        h('div', { class: 'bt3' }, botoes.map((b) => h('button', { type: 'button', class: 'btn ' + (b.tipo || ''), 'data-id': String(b.id), onclick: () => fecha(b.id) }, b.rotulo)))));
+    document.addEventListener('keydown', tecla, true);
+    document.body.append(el);
+    const alvo = el.querySelector(foco ? '[data-id="' + foco + '"]' : '.btn'); if (alvo) alvo.focus();
+  });
 }
-function carrega(id) {
-  const w = ABERTOS.get(id); if (!w) return;
-  w.frame.classList.add('carregando');
-  w.frame.src = w.a.url;
+const confirma = (titulo, texto, ok = 'Confirmar', perigo = false) => dialogo({ titulo, texto, foco: 'null', botoes: [{ id: null, rotulo: 'Cancelar', tipo: 'ghost' }, { id: 'ok', rotulo: ok, tipo: perigo ? 'danger' : 'primary' }] }).then((v) => v === 'ok');
+
+// ---- Ctrl K: pular para qualquer página ou fazer uma coisa sem procurar no menu
+function acoesPaleta() {
+  return [
+    { t: 'Registrar venda', s: 'Loja', ic: 'plus', f: () => novaVenda() },
+    { t: 'Achar produto para vender', s: 'Loja', ic: 'search', f: () => ir('amazon/garimpo', true) },
+    { t: 'Atualizar as vendas da Amazon', s: 'Loja', ic: 'refresh', f: () => sincronizaAmazon() },
+    { t: 'Buscar clientes no Google Maps', s: 'Clientes', ic: 'radar', f: () => ir('radar', true) },
+    { t: 'Criar foto ou vídeo de modelo', s: 'IA', ic: 'sparkles', f: () => ir('ia/criar', true) },
+    ...(RP && RP.estado === 'desligada' ? [{ t: 'Ligar a máquina de vídeo (RunPod)', s: 'IA', ic: 'power', f: () => ligaGpu() }] : []),
+    ...(RP && ['ligada', 'ligando'].includes(RP.estado) ? [{ t: 'Desligar a máquina de vídeo (RunPod)', s: 'IA', ic: 'power', f: () => desligaGpu() }] : []),
+    ...(RP && ['sem_preparo', 'erro'].includes(RP.estado) ? [{ t: 'Preparar a máquina de vídeo (RunPod)', s: 'IA', ic: 'sliders', f: () => ir('ia/conexoes', true) }] : []),
+    { t: 'Nova visita (Cardápio 3D)', s: 'Projetos', ic: 'calendar', f: () => visitaDrawer(null) },
+    { t: 'Aparelhos conectados', s: 'Acesso', ic: 'shield', f: () => ir('acesso', true) },
+    { t: 'Sair deste aparelho', s: 'Acesso', ic: 'power', f: () => sairView() },
+  ];
 }
-function novaAba(id) { const a = APPS_C[id]; if (a && a.url) window.open(a.url, '_blank', 'noopener'); }
-function fecha(id) {
-  const w = ABERTOS.get(id); if (!w) return;
-  w.frame.remove(); ABERTOS.delete(id); desenhaAbertos();
-  if (ROTA === 'app:' + id) ir(VOLTAR || 'inicio');
+function destinosPaleta() {
+  const lista = [];
+  for (const [id, nome, icone] of [...NAV, ...NAV_BAIXO]) lista.push({ t: nome, s: 'Ir para', ic: icone, f: () => ir(id, true) });
+  for (const id of Object.keys(MODS)) for (const m of MOD_MENU[id] || []) lista.push({ t: AREA[id][0] + ' · ' + m.nome, s: 'Ir para', ic: m.ic, f: () => ir(id + (m.caminho === '/' ? '' : m.caminho), true) });
+  return lista;
 }
-function desenhaAbertos() {
-  if (!SH) return;
-  SH.boxAbertos.hidden = ABERTOS.size === 0;
-  SH.abertos.replaceChildren(...[...ABERTOS.keys()].map((id) => {
-    const a = APPS_C[id];
-    return h('div', { class: 'ab', 'data-app': id },
-      h('button', { type: 'button', class: 'ab-go', onclick: () => ir('app:' + id, true) }, selo(a), h('span', { text: a.nome })),
-      h('button', { type: 'button', class: 'ab-x', 'aria-label': 'Fechar ' + a.nome, title: 'Fechar', onclick: () => fecha(id) }, ic('x')));
-  }));
-  marcaNav();
+async function sincronizaAmazon() {
+  try {
+    const r = await call('amazonSincronizar');
+    if (r.erro) throw new Error(r.mensagem || 'O Painel Amazon não respondeu.');
+    toast(r.jaRodando ? 'Já estava atualizando. Os números chegam em instantes.' : 'Pedi à Amazon. Os números novos chegam em 1 ou 2 minutos.', 'ok', 4500);
+  } catch (e) { fail(e); }
 }
-function mostraApp(id) {
-  const w = ABERTOS.get(id);
-  if (!w) { abrir(id); return; }
-  for (const [k, x] of ABERTOS) x.frame.classList.toggle('on', k === id);
-  const a = w.a;
-  SH.wsBar.replaceChildren(
-    h('button', { class: 'btn ghost icon-btn', type: 'button', 'aria-label': 'Voltar', title: 'Voltar', onclick: () => ir(VOLTAR || 'inicio') }, ic('back')),
-    selo(a), h('div', { class: 'ws-tt' }, h('b', { text: a.nome }), h('small', { text: a.sub })),
-    ponto(statusDe(id)), h('span', { class: 'sp' }),
-    h('button', { class: 'btn ghost icon-btn', type: 'button', title: 'Recarregar', 'aria-label': 'Recarregar', onclick: () => carrega(id) }, ic('sync')),
-    h('button', { class: 'btn ghost icon-btn', type: 'button', title: 'Abrir em nova aba', 'aria-label': 'Abrir em nova aba', onclick: () => novaAba(id) }, ic('ext')),
-    h('button', { class: 'btn ghost icon-btn', type: 'button', title: 'Fechar', 'aria-label': 'Fechar ' + a.nome, onclick: () => fecha(id) }, ic('x')));
+let PAL = null;
+function abrePaleta() {
+  if (PAL || !SH || !SH.raiz.isConnected) return;
+  const todos = [...acoesPaleta().map((x) => ({ ...x, g: 'Ações' })), ...destinosPaleta().map((x) => ({ ...x, g: 'Ir para' }))];
+  let sel = 0, vis = todos;
+  const inp = h('input', { type: 'text', placeholder: 'buscar ou executar…', autocomplete: 'off', spellcheck: 'false', 'aria-label': 'Buscar ou executar' });
+  const lista = h('div', { class: 'lista', role: 'listbox' });
+  const fecha = () => { document.removeEventListener('keydown', tecla, true); el.remove(); document.body.classList.remove('pl-open'); PAL = null; };
+  const roda = (x) => { fecha(); if (x) x.f(); };
+  const pinta = () => {
+    const q = norm(inp.value).trim();
+    vis = q ? todos.filter((x) => norm(x.t + ' ' + x.s).includes(q)) : todos;
+    sel = Math.min(sel, Math.max(0, vis.length - 1));
+    const kids = []; let g = '';
+    vis.forEach((x, i) => {
+      if (x.g !== g) { g = x.g; kids.push(h('div', { class: 'gl', text: g })); }
+      kids.push(h('button', { type: 'button', class: 'pi' + (i === sel ? ' on' : ''), role: 'option', onmousemove: () => { if (sel !== i) { sel = i; pinta(); } }, onclick: () => roda(x) }, icApp(x.ic), h('span', { text: x.t }), h('small', { text: x.s })));
+    });
+    lista.replaceChildren(...(kids.length ? kids : [h('div', { class: 'vazio', text: 'Nada com “' + inp.value + '”.' })]));
+    const on = lista.querySelector('.on'); if (on) on.scrollIntoView({ block: 'nearest' });
+  };
+  const tecla = (ev) => {
+    if (ev.key === 'Escape') { ev.preventDefault(); ev.stopImmediatePropagation(); fecha(); }
+    else if (ev.key === 'ArrowDown') { ev.preventDefault(); sel = Math.min(vis.length - 1, sel + 1); pinta(); }
+    else if (ev.key === 'ArrowUp') { ev.preventDefault(); sel = Math.max(0, sel - 1); pinta(); }
+    else if (ev.key === 'Enter') { ev.preventDefault(); roda(vis[sel]); }
+  };
+  inp.addEventListener('input', () => { sel = 0; pinta(); });
+  const el = h('div', { class: 'pl', onclick: (ev) => { if (ev.target === el) fecha(); } },
+    h('div', { class: 'pb', role: 'dialog', 'aria-label': 'Buscar ou executar' }, h('div', { class: 'in' }, h('b', { text: '>' }), inp), lista,
+      h('div', { class: 'ft' }, h('span', { text: '↑↓ escolher' }), h('span', { text: 'Enter abrir' }), h('span', { text: 'Esc fechar' }))));
+  document.body.append(el); document.body.classList.add('pl-open'); PAL = el;
+  document.addEventListener('keydown', tecla, true); pinta(); inp.focus();
 }
+addEventListener('keydown', (ev) => {
+  if (!sessao || !SH || !SH.raiz.isConnected) return;
+  if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'k') { ev.preventDefault(); if (PAL) PAL.click(); else abrePaleta(); return; }
+  const t = ev.target, digitando = t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
+  if (ev.key === '/' && !digitando && !ev.ctrlKey && !ev.metaKey && !ev.altKey) { ev.preventDefault(); abrePaleta(); }
+});
 
 // ---- peças das telas
 function cabeca(titulo, sub, ...acoes) {
@@ -937,7 +984,7 @@ VISTAS.inicio = (v) => {
     atalho('sparkles', 'Criar conteúdo', 'Fotos e vídeos das modelos', () => ir('ia/criar', true)),
     atalho('calendar', 'Nova visita', 'Cardápio 3D do negócio', () => visitaDrawer(null)));
   const corpo = h('div', { class: 'bento' }, carregando('Loja Amazon'), carregando('Precisa de você'));
-  v.replaceChildren(h('div', { class: 'pg' }, cabeca(ola, dia, botaoAtualizar(() => VISTAS.inicio(v))), atalhos, corpo));
+  v.replaceChildren(h('div', { class: 'pg' }, cabeca(ola, dia, botaoAtualizar(() => VISTAS.inicio(v))), corpo));
   Promise.all([pegaCentral(), pegaVisitas().catch(() => [])]).then(([c, vis]) => {
     if (ROTA !== 'inicio' || !corpo.isConnected) return;
     corpo.replaceChildren(blocoDinheiro(c.amazon || {}), blocoFazer(c, vis), blocoProjetosInicio(), blocoClientes(c.radar), blocoVisitas(vis));
@@ -1024,7 +1071,7 @@ async function visitaDrawer(orig, pre) {
     } catch (e) { fail(e); }
   }
   async function apagar() {
-    if (!confirm('Apagar a visita “' + (v.negocio || v.nome) + '”?')) return;
+    if (!(await confirma('Apagar a visita?', '“' + (v.negocio || v.nome) + '” sai da lista de visitas.', 'Apagar', true))) return;
     busy('Apagando…');
     try { await call('apagarVisita', { id: v.id }); idle(); VIS = null; closeDrawer(); toast('Visita apagada.', 'ok'); if (VISTAS[ROTA]) VISTAS[ROTA](SH.vista); } catch (e) { fail(e); }
   }
@@ -1123,46 +1170,63 @@ VISTAS.projetos = (v) => {
     ...secs));
 };
 
-async function connectDrawer() {
-  const srv = servidor();
-  const link = location.origin + '/admin/#s=' + encodeURIComponent(srv);
-  const img = h('img', { class: 'qr', alt: 'QR Code com o link privado do painel', width: 220, height: 220 });
-  try { img.src = await window.QRLib.toDataURL(link, { margin: 1, width: 440, color: { dark: '#0b1f4b', light: '#ffffff' } }); }
-  catch (e) { img.alt = 'Não consegui desenhar o QR Code: copie o link abaixo.'; }
-  const inp = h('input', { class: 'input', type: 'text', readonly: true, value: link, 'aria-label': 'Link privado do painel', onclick: () => inp.select(), onfocus: () => inp.select() });
-  const copyBtn = h('button', {
-    class: 'btn primary',
-    type: 'button',
-    onclick: async () => {
-      try {
-        await navigator.clipboard.writeText(link);
-        toast('Link privado copiado.', 'ok');
-      } catch (e) {
-        inp.focus(); inp.select();
-        toast('Não consegui copiar sozinho. O link está selecionado: copie manualmente.', 'info', 5000);
-      }
-    }
-  }, 'Copiar link');
-  openDrawer('ap-title',
-    h('header', {}, h('div', { class: 'tt' }, h('h2', { id: 'ap-title', text: 'Conectar outro aparelho' })),
-      h('button', { class: 'btn ghost icon-btn', type: 'button', 'aria-label': 'Fechar', onclick: closeDrawer }, ic('x'))),
-    [
-      h('p', { class: 'lead muted', text: 'Leia o QR Code com a câmera do outro aparelho ou abra o link privado abaixo. Depois, entre com o código do Google Authenticator.' }),
-      h('div', { class: 'qrbox' }, img),
-      h('label', { class: 'field' }, h('span', { text: 'Link privado' }), inp),
-      h('div', { class: 'qr-acts' }, copyBtn),
-      h('p', { class: 'warnbox', text: 'Não compartilhe este link. Sem o código do seu celular ninguém entra, mas quem tem o link pode travar o painel errando o código.' }),
-    ],
-    h('footer', {}, h('span', { class: 'sp' }), h('button', { class: 'btn', type: 'button', onclick: closeDrawer }, 'Fechar')));
-}
-
-function sairView() {
-  const todos = confirm('Sair também de todos os outros aparelhos?\n\nOK: sai de todos. Cancelar: sai só deste.');
-  const s = sessao;
+// ---- sair e aparelhos conectados (no lugar do "Conectar aparelho": aparelho novo só digita o código de 6 números)
+async function sairView() {
+  const r = await dialogo({ titulo: 'Sair da Central?', texto: 'Você pode sair só deste aparelho ou de todos os aparelhos conectados.', foco: 'null',
+    botoes: [{ id: null, rotulo: 'Cancelar', tipo: 'ghost' }, { id: 'este', rotulo: 'Sair deste' }, { id: 'todos', rotulo: 'Sair de todos', tipo: 'danger' }] });
+  if (!r) return;
+  const todos = r === 'todos';
   call('sair', { todos }).catch(() => { /* sai daqui de qualquer jeito */ });
-  sessao = null; data = null; store.del(K_SESSAO); void s;
+  sessao = null; data = null; store.del(K_SESSAO);
   loginView(todos ? 'Saiu de todos os aparelhos.' : 'Saiu deste aparelho.', true);
 }
+const quandoMs = (ms) => {
+  if (!ms) return '';
+  const d = new Date(ms), hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  return d.toDateString() === new Date().toDateString() ? 'hoje ' + hora : d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' ' + hora;
+};
+const haQuanto = (ms) => {
+  if (!ms) return 'sem registro';
+  const m = Math.round((Date.now() - ms) / 60000);
+  if (m < 2) return 'agora';
+  if (m < 60) return 'há ' + m + ' min';
+  const hh = Math.round(m / 60);
+  return hh < 36 ? 'há ' + hh + ' h' : 'há ' + Math.round(hh / 24) + ' dias';
+};
+VISTAS.acesso = (v) => {
+  const corpo = h('div', { class: 'pg-body' }, carregando('Aparelhos'));
+  const outros = h('button', { class: 'btn danger sm', type: 'button', disabled: true }, 'Sair de todos os outros');
+  v.replaceChildren(h('div', { class: 'pg' },
+    cabeca('Aparelhos conectados', 'Quem está dentro da sua Central agora. Aparelho novo? Abra star-net.pro/admin e digite o código de 6 números do Authenticator: não precisa de QR nem de link.', outros), corpo));
+  const carregaLista = async () => {
+    let r;
+    try { r = await call('aparelhos'); } catch (e) { falhaNaTela(corpo, e, carregaLista); return; }
+    if (ROTA !== 'acesso' || !corpo.isConnected) return;
+    const lista = Array.isArray(r.lista) ? r.lista : [];
+    outros.disabled = !lista.some((x) => !x.atual);
+    corpo.replaceChildren(h('section', { class: 'card' },
+      h('div', { class: 'card-hd' }, h('h2', { text: plural(lista.length, 'aparelho', 'aparelhos') })),
+      ...lista.map((x) => h('div', { class: 'dev' + (x.atual ? ' atual' : '') },
+        h('span', { class: 'ic2' }, ic(/iPhone|iPad|Android/i.test(x.nome) ? 'phone' : 'monitor')),
+        h('div', { class: 'dev-tx' }, h('b', {}, x.nome, x.atual ? h('span', { class: 'tag', text: 'ESTE APARELHO' }) : null),
+          h('small', { text: (x.criada ? 'entrou ' + quandoMs(x.criada) + ' · ' : '') + 'usado ' + haQuanto(x.ultimo) + ' · vale até ' + dataBR(new Date(x.ate).toISOString().slice(0, 10)).slice(0, 5) })),
+        h('button', { class: 'btn sm ' + (x.atual ? 'ghost' : 'danger'), type: 'button', onclick: () => revoga(x) }, x.atual ? 'Sair' : 'Revogar')))));
+  };
+  async function revoga(x) {
+    if (x.atual) { sairView(); return; }
+    if (!(await confirma('Revogar este aparelho?', x.nome + ' perde o acesso agora. Para entrar de novo ele precisa de um código do Authenticator.', 'Revogar', true))) return;
+    try {
+      busy('Revogando…'); const r = await call('revogar', { id: x.id }); idle();
+      if (r.erro) throw new Error('Não achei esse aparelho (talvez ele já tenha saído).');
+      toast('Aparelho revogado.', 'ok'); carregaLista();
+    } catch (e) { idle(); fail(e); }
+  }
+  outros.addEventListener('click', async () => {
+    if (!(await confirma('Sair de todos os outros?', 'Só este aparelho continua dentro. Os outros precisam de um código do Authenticator para voltar.', 'Sair dos outros', true))) return;
+    try { busy('Saindo dos outros…'); await call('revogar', { outros: true }); idle(); toast('Os outros aparelhos saíram.', 'ok'); carregaLista(); } catch (e) { idle(); fail(e); }
+  });
+  carregaLista();
+};
 
 // ---------------------------------------------------------------- gaveta (detalhe e edição)
 let drawerEl = null; let lastFocus = null;
@@ -1275,7 +1339,7 @@ function editDrawer(orig) {
   }
   async function del() {
     const n = (p.pdfs || []).length;
-    if (!confirm('Apagar “' + p.nome + '”' + (n ? ' e ' + (n === 1 ? 'o PDF dele' : 'os ' + n + ' PDFs dele') : '') + '? Os PDFs ficam 30 dias na lixeira do servidor antes de sumir de vez.')) return;
+    if (!(await confirma('Apagar “' + p.nome + '”?', (n ? (n === 1 ? 'O PDF dele também sai. ' : 'Os ' + n + ' PDFs dele também saem. ') : '') + 'Os PDFs ficam 30 dias na lixeira do servidor antes de sumir de vez.', 'Apagar', true))) return;
     const nd = JSON.parse(JSON.stringify(data)); nd.projetos = nd.projetos.filter((x) => x.id !== p.id);
     try {
       busy('Apagando…');
@@ -1311,7 +1375,7 @@ async function start() {
     }
     if (!urlServidorValida(u)) { setupView('Esse link não é de um servidor do painel.'); return; }
     const prev = store.get(K_SERVIDOR);
-    if (!prev || prev === u || confirm('Este link troca o servidor do painel deste aparelho por outro.\n\nSó continue se foi você que gerou o link no painel.\n\nOK: trocar. Cancelar: manter o atual.')) {
+    if (!prev || prev === u || (await confirma('Trocar o servidor deste aparelho?', 'Este link troca o servidor do painel deste aparelho por outro. Só continue se foi você que gerou o link no painel.', 'Trocar'))) {
       if (prev && prev !== u) store.del(K_SESSAO);
       store.set(K_SERVIDOR, u);
     }
