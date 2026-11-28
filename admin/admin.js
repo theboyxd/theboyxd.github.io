@@ -499,7 +499,6 @@ async function importFiles(files) {
   } catch (e) { fail(e); }
 }
 
-function statusPill(st) { const k = STATUS_TXT[st] ? st : 'sem'; return h('span', { class: 'pill st-' + k, text: STATUS_TXT[k] }); }
 
 
 // ---------------------------------------------------------------- Central: o que importa dos seus negócios e os seus apps num lugar só
@@ -529,6 +528,15 @@ const APPS_C = {
   site: { nome: 'Site star-net.pro', sub: 'A sua vitrine', ic: 'globe', tom: 't-navy', url: 'https://star-net.pro/' },
 };
 const STATUS_DE = { amazon: 'amazon', radar: 'radar', dads: 'dads', cardapio: 'site', imob: 'site', site: 'site' };
+// Projetos por categoria (o que você vende para cada tipo de negócio)
+const CATS = [['restaurantes', 'Restaurantes'], ['imobiliarias', 'Imobiliárias'], ['clinicas', 'Clínicas'], ['outros', 'Outros']];
+const CAT_TXT = Object.fromEntries(CATS);
+const CAT_IC = { restaurantes: 'burger', imobiliarias: 'building', clinicas: 'globe', outros: 'folder' };
+const CAT_TOM = { restaurantes: 't-red', imobiliarias: 't-sky', clinicas: 't-teal', outros: 't-navy' };
+const CAT_BUSCA = { restaurantes: 'restaurante', imobiliarias: 'imobiliária', clinicas: 'clínica odontológica' };
+const IC_PROJ = { 'cardapio-3d': 'cube', 'dads-burger': 'burger', proppulse: 'building' };
+const catDe = (p) => (CAT_TXT[p.categoria] ? p.categoria : 'outros');
+function linkPrevia(p) { const ls = p.links || []; return ls.find((l) => l.tipo === 'site') || ls.find((l) => l.tipo === 'demo') || ls.find((l) => l.tipo !== 'repo') || null; }
 const DADS_ADMIN = 'https://dadsburguer.site/admin';
 const DADS_SECOES = [['kanban', 'Pedidos'], ['catalog', 'Cardápio, estoque e 3D'], ['delivery', 'Entregas'], ['hours', 'Horários'], ['finance', 'Financeiro']];
 const NOME_TAREFA = { listings: 'Anúncios', stock: 'Estoque', orders: 'Pedidos', fees: 'Taxas', buybox: 'Buy Box' };
@@ -564,12 +572,12 @@ async function pegaPratos() {
 }
 
 // ---- casca: menu lateral (computador), barra de baixo (celular) e a área onde os apps abrem
-const NAV = [['inicio', 'Hoje', 'home', 'Hoje'], ['amazon', 'Dropshipping', 'cart', 'Dropship'], ['radar', 'Radar de clientes', 'radar', 'Radar'],
-  ['apps', 'Apps que vendo', 'grid', 'Apps'], ['visitas', 'Visitas', 'store', 'Visitas'], ['projetos', 'Clientes e projetos', 'folder', 'Projetos']];
+const NAV = [['inicio', 'Início', 'home', 'Início'], ['amazon', 'Loja Amazon', 'cart', 'Loja'], ['radar', 'Novos clientes', 'radar', 'Clientes'],
+  ['projetos', 'Projetos', 'grid', 'Projetos']];
 // Apps que moram na Central: as telas vêm de apps/<id>.js (montadas de Star-net/star-net-central) e falam com o app
 // pela ponte (ação "app" do servidor do painel). Endereços: #/amazon/produtos, #/radar/clientes…
 const VERSAO = new URL(import.meta.url).searchParams.get('v') || '';
-const MODS = { amazon: { arquivo: 'apps/amazon.js', nome: 'Dropshipping' }, radar: { arquivo: 'apps/radar.js', nome: 'Radar de clientes' } };
+const MODS = { amazon: { arquivo: 'apps/amazon.js', nome: 'Loja Amazon' }, radar: { arquivo: 'apps/radar.js', nome: 'Novos clientes' } };
 const MOD_P = {}; let MOD_ATUAL = ''; let ALERTAS_EM = 0;
 function modulo(id) {
   if (!MOD_P[id]) MOD_P[id] = import('./' + MODS[id].arquivo + (VERSAO ? '?v=' + VERSAO : '')).catch((e) => { delete MOD_P[id]; throw e; });
@@ -633,6 +641,7 @@ function analisa(r) {
   if (!m) return { secao: 'inicio' };
   let secao = m[1]; const resto = m[2] || '';
   if (secao === 'dropshipping') return { secao: 'amazon', caminho: '/' };
+  if (secao === 'apps' || secao === 'visitas') return { secao: 'projetos' }; // viraram parte de Projetos
   if (secao === 'app') {
     const id = resto.replace(/^\//, '').split(/[/?]/)[0];
     if (MODS[id]) return { secao: id, caminho: '/' };
@@ -818,17 +827,6 @@ function grafico(serie, mes) {
   });
   return h('figure', { class: 'graf' }, svg, h('figcaption', {}, h('span', { text: '1º de ' + mes }), h('span', { text: 'hoje' })));
 }
-function alertasDrop(A) {
-  const itens = [];
-  if (!A.conectada) itens.push(['alert', 'A Amazon não está conectada ao painel', '/config', 'err']);
-  for (const [k, t] of Object.entries(A.tarefas || {})) if (!t.ok) itens.push(['alert', (NOME_TAREFA[k] || k) + ' não atualizou: ' + t.msg, '/config', 'err']);
-  if (A.reporTotal) itens.push(['box', plural(A.reporTotal, 'produto para repor', 'produtos para repor'), '/produtos', 'warn']);
-  if (A.mes && A.mes.semCusto) itens.push(['alert', plural(A.mes.semCusto, 'venda sem custo cadastrado', 'vendas sem custo cadastrado') + ': o lucro fica incompleto', '/vendas', 'warn']);
-  if (A.envios) itens.push(['truck', plural(A.envios, 'compra a caminho', 'compras a caminho'), '/logistica', 'info']);
-  if (!itens.length) return null;
-  return h('ul', { class: 'alertas' }, itens.map(([icone, t, destino, tipo]) => h('li', {},
-    h('button', { type: 'button', class: 'al al-' + tipo, onclick: () => ir('amazon' + destino, true) }, ic(icone), h('span', { text: t }), ic('go')))));
-}
 function linhaSinc(A, soBotao) {
   const o = (A.tarefas || {}).orders;
   const txt = A.rodando ? 'Atualizando com a Amazon agora…' : o ? 'Pedidos conferidos ' + quando(o.em) + (o.msg ? ' · ' + o.msg : '') : 'Ainda sem atualização da Amazon';
@@ -851,102 +849,97 @@ function ultimaTxt(u) {
   const dias = Math.round((new Date(hojeLocal() + 'T12:00:00') - new Date(u.data + 'T12:00:00')) / 86400000);
   return ' · a última foi em ' + dataBR(u.data).slice(0, 5) + (dias > 1 ? ', há ' + dias + ' dias' : '');
 }
-function dinheiro(A, completo) {
-  const mes = mesNome(A.de), ant = A.anterior || {}, dias = (A.serie || []).length;
-  const delta = ant.faturamento > 0 && A.mes.faturamento > 0 ? Math.round((A.mes.faturamento - ant.faturamento) / ant.faturamento * 100) : null;
-  return h('div', { class: 'money' + (completo ? ' cheio' : '') },
-    h('div', { class: 'm-big' },
-      h('small', { text: 'Faturamento em ' + mes }),
-      h('b', { class: 'num', text: brl(A.mes.faturamento) }),
-      h('p', { class: 'm-note' }, A.mes.pedidos ? plural(A.mes.pedidos, 'pedido', 'pedidos') + ' · ticket médio ' + brl(A.mes.ticket) : 'Nenhuma venda em ' + mes + ' até agora' + ultimaTxt(A.ultimaVenda),
-        delta !== null ? h('span', { class: 'delta ' + (delta >= 0 ? 'up' : 'down'), text: (delta >= 0 ? '+' : '') + delta + '%' }) : null),
-      ant.faturamento > 0 ? h('p', { class: 'm-note fraco', text: 'Nos ' + dias + ' dias anteriores: ' + brl(ant.faturamento) + ' em ' + plural(ant.pedidos, 'pedido', 'pedidos') }) : null),
-    h('div', { class: 'mini' }, h('small', { text: 'Hoje' }), h('b', { class: 'num', text: brl(A.hoje.faturamento) }), h('span', { text: plural(A.hoje.pedidos, 'pedido', 'pedidos') })));
-}
-function blocoDrop(c) {
-  const A = c.amazon || {};
-  const hd = h('div', { class: 'card-hd' }, h('div', {}, h('h2', { text: 'Dropshipping' }), h('p', { class: 'muted', text: A.shopee ? 'Amazon e Shopee' : 'Amazon' })),
-    h('button', { class: 'btn sm', type: 'button', onclick: () => ir('amazon', true) }, 'Abrir', ic('go')));
-  if (A.erro) return h('section', { class: 'card drop' }, hd, h('p', { class: 'err', text: A.erro }));
-  return h('section', { class: 'card drop' }, hd, dinheiro(A), grafico(A.serie || [], mesNome(A.de)), alertasDrop(A), linhaSinc(A));
-}
-function linhaApp(id, extras) {
-  const a = APPS_C[id];
-  return h('div', { class: 'ap' }, selo(a), h('div', { class: 'ap-tt' }, h('b', { text: a.nome }), h('small', { text: a.sub })), ponto(statusDe(id)),
-    h('div', { class: 'ap-acts' }, extras || [], h('button', { class: 'btn sm', type: 'button', onclick: () => abrir(id) }, 'Abrir')));
-}
-const linkDads = (sec) => h('a', { class: 'btn sm', href: DADS_ADMIN + (sec ? '?aba=' + sec : ''), target: '_blank', rel: 'noopener noreferrer' }, sec ? DADS_SECOES.find((x) => x[0] === sec)[1] : 'Admin', ic('ext'));
-function blocoRadar(R, curto) {
-  if (!R || R.erro) return null;
-  return h('div', { class: 'radar' }, selo(APPS_C.radar),
-    h('div', { class: 'ap-tt' }, h('b', { text: curto ? 'Quem procurar' : 'Radar de Clientes' }),
-      h('small', { text: plural(R.novo, 'negócio ainda sem contato', 'negócios ainda sem contato') + ' · ' + R.contatado + ' contatados · ' + plural(R.interessado, 'interessado', 'interessados') + (R.fechado ? ' · ' + plural(R.fechado, 'fechado', 'fechados') : '') })),
-    h('button', { class: 'btn sm', type: 'button', onclick: () => ir('radar/clientes', true) }, 'Meus clientes'));
-}
-function blocoVenda(c) {
-  return h('section', { class: 'card venda' },
-    h('div', { class: 'card-hd' }, h('div', {}, h('h2', { text: 'Apps que vendo' }), h('p', { class: 'muted', text: 'Abra, edite e prepare a visita' })),
-      h('button', { class: 'btn sm ghost', type: 'button', onclick: () => ir('apps') }, 'Ver tudo', ic('go'))),
-    linhaApp('dads', [linkDads('')]),
-    linhaApp('cardapio', [h('button', { class: 'btn sm', type: 'button', onclick: () => visitaDrawer(null) }, 'Preparar visita')]),
-    linhaApp('imob'),
-    blocoRadar(c.radar, true));
-}
 function linhaVisita(v) {
   return h('div', { class: 'vl' }, h('span', { class: 'vl-cor', style: `--c1:#${v.cor};--c2:#${v.cor2}`, 'aria-hidden': 'true' }),
     h('div', { class: 'ap-tt' }, h('b', { text: v.negocio || v.nome }), h('small', { text: [dataCurta(v.quando), v.cidade, 'Cardápio 3D'].filter(Boolean).join(' · ') })),
     h('button', { class: 'btn sm', type: 'button', onclick: () => qrVisita(v) }, ic('qr'), 'Mostrar'));
 }
-function blocoAgenda(vis) {
-  const hj = hojeLocal();
-  const prox = vis.filter((v) => v.quando && v.quando >= hj).sort((a, b) => a.quando.localeCompare(b.quando)).slice(0, 3);
-  const proj = ((data && data.projetos) || []).filter((p) => ['andamento', 'proposta', 'demonstracao'].includes(p.status)).slice(0, 5);
-  if (!prox.length && !proj.length) return null;
-  return h('section', { class: 'card agenda' },
-    prox.length ? [h('div', { class: 'card-hd' }, h('h2', { text: 'Próximas visitas' }), h('button', { class: 'btn sm ghost', type: 'button', onclick: () => ir('visitas') }, 'Visitas', ic('go'))), prox.map(linhaVisita)] : null,
-    proj.length ? [h('div', { class: 'card-hd' + (prox.length ? ' sep' : '') }, h('h2', { text: 'Em andamento com clientes' }), h('button', { class: 'btn sm ghost', type: 'button', onclick: () => ir('projetos') }, 'Projetos', ic('go'))),
-      h('div', { class: 'pjs' }, proj.map((p) => h('button', { type: 'button', class: 'pj', onclick: () => detailDrawer(p) }, h('span', { class: 'ap-tt' }, h('b', { text: p.nome }), p.cliente ? h('small', { text: p.cliente }) : null), statusPill(p.status))))] : null);
-}
-
 // ---- telas
+function atalho(icone, titulo, sub, fn) {
+  return h('button', { type: 'button', class: 'at', onclick: fn }, h('span', { class: 'at-ic' }, icApp(icone)), h('span', { class: 'at-tx' }, h('b', { text: titulo }), h('small', { text: sub })));
+}
+function itemFazer(icone, texto, tipo, fn) {
+  return h('li', {}, h('button', { type: 'button', class: 'al al-' + tipo, onclick: fn }, icApp(icone), h('span', { text: texto }), icApp('chevron-right')));
+}
+const novaVenda = () => modulo('amazon').then((m) => m.novaVenda()).catch(fail);
+function blocoDinheiro(A) {
+  const mes = mesNome(A.de || hojeLocal()), ant = A.anterior || {}, m = A.mes || {};
+  const delta = ant.faturamento > 0 && m.faturamento > 0 ? Math.round((m.faturamento - ant.faturamento) / ant.faturamento * 100) : null;
+  return h('section', { class: 'card bt bt-din' },
+    h('div', { class: 'card-hd' }, h('div', {}, h('span', { class: 'bt-lab' }, icApp('cart'), 'Loja Amazon'), h('h2', { text: 'Faturamento em ' + mes })),
+      h('button', { class: 'btn sm', type: 'button', onclick: () => ir('amazon', true) }, 'Abrir a loja', ic('go'))),
+    A.erro ? h('p', { class: 'err', text: A.erro }) : [
+      h('div', { class: 'bt-din-l' },
+        h('div', {}, h('b', { class: 'num bt-big', text: brl(m.faturamento) }),
+          h('p', { class: 'm-note' }, m.pedidos ? plural(m.pedidos, 'pedido', 'pedidos') + ' · ticket médio ' + brl(m.ticket) : 'Nenhuma venda em ' + mes + ' até agora' + ultimaTxt(A.ultimaVenda),
+            delta !== null ? h('span', { class: 'delta ' + (delta >= 0 ? 'up' : 'down'), text: (delta >= 0 ? '+' : '') + delta + '%' }) : null),
+          ant.faturamento > 0 ? h('p', { class: 'm-note fraco', text: 'Nos ' + (A.serie || []).length + ' dias anteriores: ' + brl(ant.faturamento) + ' em ' + plural(ant.pedidos, 'pedido', 'pedidos') }) : null),
+        h('div', { class: 'mini' }, h('small', { text: 'Hoje' }), h('b', { class: 'num', text: brl((A.hoje || {}).faturamento) }), h('span', { text: plural((A.hoje || {}).pedidos || 0, 'pedido', 'pedidos') }))),
+      grafico(A.serie || [], mes), linhaSinc(A)]);
+}
+function blocoFazer(c, vis) {
+  const A = c.amazon || {}, R = c.radar || {}, itens = [];
+  if (A.conectada === false) itens.push(itemFazer('alert', 'A Amazon não está ligada à loja', 'err', () => ir('amazon/config', true)));
+  for (const [k, t] of Object.entries(A.tarefas || {})) if (!t.ok) itens.push(itemFazer('alert', (NOME_TAREFA[k] || k) + ' não atualizou: ' + t.msg, 'err', () => ir('amazon/config', true)));
+  if (A.reporTotal) itens.push(itemFazer('box', plural(A.reporTotal, 'produto para repor', 'produtos para repor'), 'warn', () => ir('amazon/logistica?aba=estoque', true)));
+  if (A.mes && A.mes.semCusto) itens.push(itemFazer('alert', plural(A.mes.semCusto, 'venda sem o custo do produto', 'vendas sem o custo do produto'), 'warn', () => ir('amazon/produtos', true)));
+  if (A.envios) itens.push(itemFazer('truck', plural(A.envios, 'compra a caminho', 'compras a caminho'), 'info', () => ir('amazon/logistica', true)));
+  const hj = hojeLocal(), prox = vis.filter((v) => v.quando && v.quando >= hj).sort((a, b) => a.quando.localeCompare(b.quando))[0];
+  if (prox) itens.push(itemFazer('calendar', 'Visita ' + (prox.quando === hj ? 'hoje' : dataCurta(prox.quando)) + ': ' + (prox.negocio || prox.nome), 'info', () => qrVisita(prox)));
+  if (R && !R.erro && R.novo) itens.push(itemFazer('user', plural(R.novo, 'negócio esperando a sua ligação', 'negócios esperando a sua ligação'), 'info', () => ir('radar/clientes', true)));
+  return h('section', { class: 'card bt bt-faz' },
+    h('div', { class: 'card-hd' }, h('div', {}, h('span', { class: 'bt-lab' }, icApp('check-circle'), 'Agora'), h('h2', { text: 'Precisa de você' }))),
+    itens.length ? h('ul', { class: 'alertas' }, itens) : h('p', { class: 'bt-ok' }, icApp('check-circle'), 'Tudo em dia.'));
+}
+function blocoProjetosInicio() {
+  const ps = (data && data.projetos) || [];
+  return h('section', { class: 'card bt bt-proj' },
+    h('div', { class: 'card-hd' }, h('div', {}, h('span', { class: 'bt-lab' }, icApp('grid'), 'Projetos'), h('h2', { text: 'O que você vende' })),
+      h('button', { class: 'btn sm ghost', type: 'button', onclick: () => ir('projetos', true) }, 'Ver projetos', ic('go'))),
+    ps.length ? h('div', { class: 'bt-pjs' }, ps.map((p) => {
+      const l = linkPrevia(p), cat = CAT_TXT[catDe(p)];
+      return h('button', { type: 'button', class: 'bt-pj', onclick: () => (l ? viewSite({ rotulo: p.nome, url: l.url }) : ir('projetos', true)) },
+        h('span', { class: 'selo ' + CAT_TOM[catDe(p)] }, ic(IC_PROJ[p.id] || CAT_IC[catDe(p)])),
+        h('span', { class: 'ap-tt' }, h('b', { text: p.nome }), h('small', { text: cat })), ic('eye'));
+    })) : h('p', { class: 'muted', text: 'Nenhum projeto ainda.' }));
+}
+function blocoClientes(R) {
+  const tot = R && !R.erro ? (R.novo || 0) + (R.contatado || 0) + (R.interessado || 0) + (R.fechado || 0) : 0;
+  const parte = (n, cls, t) => (n ? h('i', { class: 'fx ' + cls, style: `flex:${n}`, title: t + ': ' + n }) : null);
+  return h('section', { class: 'card bt bt-cli' },
+    h('div', { class: 'card-hd' }, h('div', {}, h('span', { class: 'bt-lab' }, icApp('radar'), 'Novos clientes'), h('h2', { text: 'Quem procurar' })),
+      h('button', { class: 'btn sm ghost', type: 'button', onclick: () => ir('radar/clientes', true) }, 'Lista de ligações', ic('go'))),
+    !R || R.erro ? h('p', { class: 'err', text: 'O Radar não respondeu agora.' }) : [
+      h('div', { class: 'funil', role: 'img', 'aria-label': `${R.novo} sem contato, ${R.contatado} contatados, ${R.interessado} interessados, ${R.fechado || 0} fechados` },
+        parte(R.novo, 'f1', 'Sem contato'), parte(R.contatado, 'f2', 'Contatados'), parte(R.interessado, 'f3', 'Interessados'), parte(R.fechado, 'f4', 'Fechados')),
+      h('div', { class: 'funil-leg' },
+        [['f1', 'Sem contato', R.novo], ['f2', 'Contatados', R.contatado], ['f3', 'Interessados', R.interessado], ['f4', 'Fechados', R.fechado || 0]].map(([k, t, n]) => h('span', {}, h('i', { class: 'fx ' + k }), t, h('b', { class: 'num', text: String(n || 0) })))),
+      h('p', { class: 'muted small', text: plural(tot, 'negócio encontrado', 'negócios encontrados') + ' no Google Maps.' }),
+      h('div', { class: 'prod-acts' }, h('button', { class: 'btn sm primary', type: 'button', onclick: () => ir('radar/clientes', true) }, 'Ligar agora'), h('button', { class: 'btn sm', type: 'button', onclick: () => ir('radar', true) }, 'Buscar mais no Maps'))]);
+}
+function blocoVisitas(vis) {
+  const hj = hojeLocal();
+  const prox = vis.filter((v) => !v.quando || v.quando >= hj).sort((a, b) => String(a.quando || '9').localeCompare(String(b.quando || '9'))).slice(0, 3);
+  return h('section', { class: 'card bt bt-vis' },
+    h('div', { class: 'card-hd' }, h('div', {}, h('span', { class: 'bt-lab' }, icApp('calendar'), 'Visitas'), h('h2', { text: 'Próximas visitas' })),
+      h('button', { class: 'btn sm', type: 'button', onclick: () => visitaDrawer(null) }, ic('plus'), 'Nova visita')),
+    prox.length ? prox.map(linhaVisita) : h('p', { class: 'muted', text: 'Nenhuma visita marcada. Vai entrar num restaurante? Prepare o Cardápio 3D com o nome e as cores dele antes.' }));
+}
 VISTAS.inicio = (v) => {
   const hr = new Date().getHours();
   const ola = hr < 5 ? 'Boa noite' : hr < 12 ? 'Bom dia' : hr < 18 ? 'Boa tarde' : 'Boa noite';
   const dia = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
-  const corpo = h('div', { class: 'grade-inicio' }, carregando('Dropshipping'), carregando('Apps que vendo'));
-  v.replaceChildren(h('div', { class: 'pg' }, cabeca(ola, dia, botaoAtualizar(() => VISTAS.inicio(v))), corpo));
+  const atalhos = h('div', { class: 'atalhos' },
+    atalho('plus', 'Registrar venda', 'Loja Amazon', novaVenda),
+    atalho('search', 'Achar produto', 'Para vender na Amazon', () => ir('amazon/garimpo', true)),
+    atalho('radar', 'Buscar clientes', 'No Google Maps', () => ir('radar', true)),
+    atalho('calendar', 'Nova visita', 'Cardápio 3D do negócio', () => visitaDrawer(null)));
+  const corpo = h('div', { class: 'bento' }, carregando('Loja Amazon'), carregando('Precisa de você'));
+  v.replaceChildren(h('div', { class: 'pg' }, cabeca(ola, dia, botaoAtualizar(() => VISTAS.inicio(v))), atalhos, corpo));
   Promise.all([pegaCentral(), pegaVisitas().catch(() => [])]).then(([c, vis]) => {
     if (ROTA !== 'inicio' || !corpo.isConnected) return;
-    corpo.replaceChildren(blocoDrop(c), blocoVenda(c), blocoAgenda(vis) || '');
+    corpo.replaceChildren(blocoDinheiro(c.amazon || {}), blocoFazer(c, vis), blocoProjetosInicio(), blocoClientes(c.radar), blocoVisitas(vis));
   }).catch((e) => falhaNaTela(corpo, e, () => VISTAS.inicio(v)));
-};
-
-function prodCard(id, o) {
-  const a = APPS_C[id];
-  return h('article', { class: 'prod' },
-    h('div', { class: 'prod-hd' }, selo(a, true), h('div', { class: 'ap-tt' }, h('h3', { text: a.nome }), h('small', { text: a.sub })), ponto(statusDe(id))),
-    h('p', { class: 'prod-tx', text: o.texto }),
-    o.extra || null,
-    h('div', { class: 'prod-acts' }, o.acoes));
-}
-VISTAS.apps = (v) => {
-  const grade = h('div', { class: 'prods' });
-  v.replaceChildren(h('div', { class: 'pg' }, cabeca('Apps que vendo', 'O que está no ar, onde editar e a demonstração de cada um'), grade));
-  const desenha = () => {
-    grade.replaceChildren(
-      prodCard('dads', { texto: 'Pedidos pelo site com pagamento online, painel do dono, entregas e cardápio com pratos em 3D.',
-        extra: h('div', { class: 'prod-ed' }, h('small', { class: 'lab', text: 'Editar no admin do Dad’s (abre em nova aba, com a senha dele)' }),
-          h('div', { class: 'chips2' }, DADS_SECOES.map(([k, t]) => h('a', { class: 'chip2', href: DADS_ADMIN + '?aba=' + k, target: '_blank', rel: 'noopener noreferrer' }, t)))),
-        acoes: [h('button', { class: 'btn', type: 'button', onclick: () => abrir('dads') }, 'Ver o site'), linkDads('')] }),
-      prodCard('cardapio', { texto: 'O cliente vê o prato em 3D e em tamanho real na mesa, pela câmera do celular.',
-        acoes: [h('button', { class: 'btn primary', type: 'button', onclick: () => visitaDrawer(null) }, 'Preparar visita'), h('button', { class: 'btn', type: 'button', onclick: () => abrir('cardapio') }, 'Abrir demonstração')] }),
-      prodCard('imob', { texto: 'Atende o cliente no WhatsApp, confirma o preço com o proprietário e chama o corretor.',
-        acoes: [h('button', { class: 'btn', type: 'button', onclick: () => abrir('imob') }, 'Abrir demonstração')] }),
-      prodCard('site', { texto: 'A página que apresenta a Star-net. No computador, a tecla F abre o modo apresentação.',
-        acoes: [h('button', { class: 'btn', type: 'button', onclick: () => abrir('site') }, 'Abrir'), h('a', { class: 'btn', href: 'https://star-net.pro/', target: '_blank', rel: 'noopener' }, 'Apresentar', ic('ext'))] }));
-  };
-  desenha();
-  pegaCentral().then(() => { if (ROTA === 'apps' && grade.isConnected) desenha(); }).catch((e) => { if (e instanceof SessaoError) fail(e); });
 };
 
 // ---- visitas: a demonstração com o nome e as cores do cliente, pronta antes de entrar no negócio
@@ -966,7 +959,7 @@ function cardVisita(v) {
   return h('article', { class: 'vis' + (passou ? ' passou' : '') },
     h('div', { class: 'vis-cor', style: `--c1:#${v.cor};--c2:#${v.cor2}`, 'aria-hidden': 'true' }),
     h('div', { class: 'vis-in' },
-      h('div', { class: 'vis-hd' }, h('h3', { text: v.negocio || v.nome }), v.quando ? h('span', { class: 'pill' + (passou ? ' st-pausado' : ''), text: dataCurta(v.quando) }) : null),
+      h('div', { class: 'vis-hd' }, h('h3', { text: v.negocio || v.nome }), v.quando ? h('small', { class: 'vis-dia' + (passou ? ' passou' : ''), text: dataCurta(v.quando) }) : null),
       h('p', { class: 'meta', text: ['Cardápio 3D', v.cidade, v.itens && v.itens.length ? plural(v.itens.length, 'prato escolhido', 'pratos escolhidos') : 'todos os pratos'].filter(Boolean).join(' · ') }),
       v.notas ? h('p', { class: 'vis-notas', text: v.notas }) : null),
     h('div', { class: 'vis-acts' },
@@ -974,20 +967,6 @@ function cardVisita(v) {
       h('button', { class: 'btn sm', type: 'button', onclick: () => viewSite({ rotulo: 'Prévia · ' + (v.nome || v.negocio), url: linkVisita(v) }) }, ic('eye'), 'Prévia'),
       h('button', { class: 'btn sm', type: 'button', onclick: () => visitaDrawer(v) }, ic('edit'), 'Editar')));
 }
-VISTAS.visitas = (v) => {
-  const lista = h('div', { class: 'visitas' }, carregando('Visitas'));
-  v.replaceChildren(h('div', { class: 'pg' },
-    cabeca('Visitas', 'Antes de entrar no negócio, deixe a demonstração com o nome e as cores dele',
-      h('button', { class: 'btn primary', type: 'button', onclick: () => visitaDrawer(null) }, ic('plus'), 'Nova visita')),
-    lista));
-  pegaVisitas(true).then((vis) => {
-    if (ROTA !== 'visitas' || !lista.isConnected) return;
-    const ord = vis.slice().sort((a, b) => { const hj = hojeLocal(); const fa = !a.quando || a.quando >= hj, fb = !b.quando || b.quando >= hj; if (fa !== fb) return fa ? -1 : 1; return String(a.quando || '9').localeCompare(String(b.quando || '9')); });
-    lista.replaceChildren(...(ord.length ? ord.map(cardVisita) : [h('div', { class: 'empty' },
-      h('p', { text: 'Nenhuma visita preparada.' }),
-      h('p', { class: 'muted', text: 'Vai visitar um restaurante? Toque em “Nova visita”, coloque o nome e as cores dele, escolha os pratos e entre com o cardápio 3D já com a cara do negócio.' }))]));
-  }).catch((e) => falhaNaTela(lista, e, () => VISTAS.visitas(v)));
-};
 async function qrVisita(v) {
   const link = linkVisita(v);
   const img = h('img', { class: 'qr', alt: 'QR Code da demonstração de ' + (v.negocio || v.nome), width: 220, height: 220 });
@@ -1006,8 +985,11 @@ async function qrVisita(v) {
     ],
     h('footer', {}, h('button', { class: 'btn', type: 'button', onclick: () => visitaDrawer(v) }, ic('edit'), 'Editar'), h('span', { class: 'sp' }), h('button', { class: 'btn', type: 'button', onclick: closeDrawer }, 'Fechar')));
 }
-async function visitaDrawer(orig) {
-  const v = orig ? { ...orig, itens: [...(orig.itens || [])] } : { id: '', produto: 'cardapio', negocio: '', nome: '', cidade: '', quando: '', cor: '2563eb', cor2: '0f172a', whats: '', end: '', frase: '', itens: [], notas: '' };
+async function visitaDrawer(orig, pre) {
+  const corOk = (c) => (/^#?[0-9a-f]{6}$/i.test(String(c || '')) ? String(c).replace('#', '').toLowerCase() : '');
+  const base = { id: '', produto: 'cardapio', negocio: '', nome: '', cidade: '', quando: '', cor: '2563eb', cor2: '0f172a', whats: '', end: '', frase: '', itens: [], notas: '' };
+  if (pre) Object.assign(base, { negocio: String(pre.negocio || '').slice(0, 80), whats: String(pre.whats || '').replace(/\D/g, '').slice(0, 20), end: String(pre.end || '').slice(0, 120), cor: corOk(pre.cor) || base.cor, cor2: corOk(pre.cor2) || base.cor2 });
+  const v = orig ? { ...orig, itens: [...(orig.itens || [])] } : base;
   const pratos = await pegaPratos();
   const negocio = h('input', { class: 'input', value: v.negocio, maxlength: 80, required: true, placeholder: 'Ex.: Pizzaria do Zé', autocomplete: 'off' });
   const nome = h('input', { class: 'input', value: v.nome, maxlength: 60, placeholder: 'Igual ao nome do negócio', autocomplete: 'off' });
@@ -1035,14 +1017,14 @@ async function visitaDrawer(orig) {
       const r = await call('salvarVisita', { visita: nv });
       if (r.erro) throw new Error(r.erro === 'cheio' ? 'Já tem 300 visitas guardadas: apague as antigas.' : 'O servidor não salvou (' + r.erro + ').');
       idle(); VIS = null; toast('Visita pronta.', 'ok');
-      if (ROTA === 'visitas' || ROTA === 'inicio') VISTAS[ROTA](SH.vista);
+      if (VISTAS[ROTA]) VISTAS[ROTA](SH.vista);
       qrVisita(r.visita);
     } catch (e) { fail(e); }
   }
   async function apagar() {
     if (!confirm('Apagar a visita “' + (v.negocio || v.nome) + '”?')) return;
     busy('Apagando…');
-    try { await call('apagarVisita', { id: v.id }); idle(); VIS = null; closeDrawer(); toast('Visita apagada.', 'ok'); if (ROTA === 'visitas' || ROTA === 'inicio') VISTAS[ROTA](SH.vista); } catch (e) { fail(e); }
+    try { await call('apagarVisita', { id: v.id }); idle(); VIS = null; closeDrawer(); toast('Visita apagada.', 'ok'); if (VISTAS[ROTA]) VISTAS[ROTA](SH.vista); } catch (e) { fail(e); }
   }
   openDrawer('vd-title',
     h('header', {}, h('div', { class: 'tt' }, h('h2', { id: 'vd-title', text: orig ? 'Editar visita' : 'Nova visita' }), h('small', { class: 'muted', text: 'Cardápio 3D com a cara do restaurante' })),
@@ -1064,31 +1046,79 @@ async function visitaDrawer(orig) {
       h('span', { class: 'sp' }), orig ? h('button', { class: 'btn danger', type: 'button', onclick: apagar }, ic('trash'), 'Apagar') : null));
 }
 
+let obsPrev = null;
+function previaViva(url, titulo) {
+  const box = h('div', { class: 'prev' }, h('div', { class: 'prev-tela' }),
+    h('button', { type: 'button', class: 'prev-sel', 'aria-label': 'Abrir ' + titulo + ' ao vivo', onclick: () => viewSite({ rotulo: titulo, url }) }, h('span', {}, ic('eye'), 'Abrir ao vivo')));
+  box.dataset.url = url; box.dataset.t = titulo;
+  if (!obsPrev) {
+    obsPrev = new IntersectionObserver((ents) => {
+      for (const e of ents) {
+        if (!e.isIntersecting) continue;
+        const b = e.target; obsPrev.unobserve(b);
+        const f = h('iframe', { src: b.dataset.url, title: 'Prévia de ' + b.dataset.t, tabindex: '-1', 'aria-hidden': 'true', referrerpolicy: 'no-referrer' });
+        f.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+        f.addEventListener('load', () => b.classList.add('ok'));
+        b.querySelector('.prev-tela').append(f);
+      }
+    }, { rootMargin: '300px' });
+  }
+  obsPrev.observe(box);
+  return box;
+}
+function cardProjeto(p) {
+  const l = linkPrevia(p);
+  const pdfs = (p.pdfs || []).filter((d) => d.id);
+  const cliente = p.cliente && !/^produto star-net/i.test(p.cliente) ? p.cliente : '';
+  const acoes = [l ? h('button', { class: 'btn sm primary', type: 'button', onclick: () => viewSite({ rotulo: p.nome, url: l.url }) }, ic('eye'), 'Abrir') : null];
+  if (p.id === 'cardapio-3d') acoes.push(h('button', { class: 'btn sm', type: 'button', onclick: () => visitaDrawer(null) }, icApp('calendar'), 'Preparar visita'));
+  if (catDe(p) === 'clinicas') acoes.push(h('button', { class: 'btn sm', type: 'button', onclick: () => ir('radar/site-clinica', true) }, icApp('sparkles'), 'Site de clínica'));
+  acoes.push(h('button', { class: 'btn sm ghost', type: 'button', onclick: () => detailDrawer(p) }, 'Links e notas'));
+  acoes.push(h('button', { class: 'btn sm ghost icon-btn', type: 'button', title: 'Editar projeto', 'aria-label': 'Editar ' + p.nome, onclick: () => editDrawer(p) }, ic('edit')));
+  return h('article', { class: 'pj2' },
+    l ? previaViva(l.url, p.nome) : h('div', { class: 'prev sem' }, h('span', { text: 'Sem site para mostrar' })),
+    h('div', { class: 'pj2-tx' },
+      h('div', { class: 'pj2-hd' }, h('span', { class: 'selo ' + CAT_TOM[catDe(p)] }, ic(IC_PROJ[p.id] || CAT_IC[catDe(p)])), h('div', { class: 'ap-tt' }, h('h3', { text: p.nome }), cliente ? h('small', { text: cliente }) : null)),
+      p.resumo ? h('p', { class: 'res', text: p.resumo }) : null,
+      p.id === 'dads-burger' ? h('div', { class: 'pj-ed' }, h('small', { class: 'lab', text: 'Editar no admin do Dad’s (abre numa aba nova)' }),
+        h('div', { class: 'chips2' }, DADS_SECOES.map(([k, t]) => h('a', { class: 'chip2', href: DADS_ADMIN + '?aba=' + k, target: '_blank', rel: 'noopener noreferrer' }, t)))) : null,
+      pdfs.length ? h('div', { class: 'pj-docs' }, h('small', { class: 'lab', text: 'Documentos' }), h('div', { class: 'chips2' }, pdfs.map((d) => h('button', { class: 'chip2', type: 'button', onclick: () => viewPdf(d) }, ic('pdf'), d.nome)))) : null,
+      h('div', { class: 'prod-acts' }, acoes.filter(Boolean))));
+}
+function blocoVisitasProj() {
+  const grade = h('div', { class: 'visitas' }, carregando('Visitas'));
+  const box = h('div', { class: 'cat-vis' },
+    h('div', { class: 'card-hd' }, h('div', {}, h('h3', { text: 'Visitas' }), h('p', { class: 'muted small', text: 'O Cardápio 3D com o nome e as cores do restaurante, pronto antes de você entrar.' })),
+      h('button', { class: 'btn sm primary', type: 'button', onclick: () => visitaDrawer(null) }, ic('plus'), 'Nova visita')),
+    grade);
+  pegaVisitas(true).then((vis) => {
+    if (!grade.isConnected) return;
+    const hj = hojeLocal();
+    const ord = vis.slice().sort((a, b) => { const fa = !a.quando || a.quando >= hj, fb = !b.quando || b.quando >= hj; if (fa !== fb) return fa ? -1 : 1; return String(a.quando || '9').localeCompare(String(b.quando || '9')); });
+    grade.replaceChildren(...(ord.length ? ord.map(cardVisita) : [h('div', { class: 'empty' }, h('p', { text: 'Nenhuma visita preparada ainda.' }),
+      h('p', { class: 'muted', text: 'Na Lista de ligações, toque em “Preparar visita” num restaurante: o nome, as cores e o WhatsApp dele já vêm preenchidos.' }))]));
+  }).catch((e) => falhaNaTela(grade, e, () => VISTAS.projetos(SH.vista)));
+  return box;
+}
 VISTAS.projetos = (v) => {
   if (!data) {
-    v.replaceChildren(h('div', { class: 'pg' }, cabeca('Clientes e projetos'),
+    v.replaceChildren(h('div', { class: 'pg' }, cabeca('Projetos'),
       h('div', { class: 'empty' }, h('p', { text: 'A lista de projetos ainda está vazia.' }), h('button', { class: 'btn primary', type: 'button', onclick: emptyView }, 'Importar ou começar do zero'))));
     return;
   }
-  const lista = data.projetos;
-  const counts = {}; for (const p of lista) counts[p.status || 'sem'] = (counts[p.status || 'sem'] || 0) + 1;
-  const search = h('input', { class: 'input search', type: 'search', placeholder: 'Buscar projeto, cliente, link ou PDF', value: filtro.q, 'aria-label': 'Buscar', oninput: (ev) => { filtro.q = ev.target.value; renderGrid(); } });
-  const chips = h('div', { class: 'chips', role: 'group', 'aria-label': 'Filtrar por status' },
-    h('button', { class: 'chip', type: 'button', 'aria-pressed': filtro.status === '' ? 'true' : 'false', onclick: () => { filtro.status = ''; appView(); } }, 'Todos', h('b', { text: String(lista.length) })),
-    STATUS.filter(([k]) => counts[k]).map(([k, t]) => h('button', { class: 'chip', type: 'button', 'aria-pressed': filtro.status === k ? 'true' : 'false', onclick: () => { filtro.status = filtro.status === k ? '' : k; appView(); } }, t, h('b', { text: String(counts[k]) }))));
-  const grid = h('div', { class: 'grid' });
-  function renderGrid() {
-    const q2 = norm(filtro.q);
-    const vis = lista.filter((p) => (!filtro.status || (p.status || 'sem') === filtro.status) && (!q2 || norm([p.nome, p.cliente, p.resumo, p.notas, ...(p.links || []).map((l) => l.rotulo + ' ' + l.url), ...(p.pdfs || []).map((d) => d.nome)].join(' ')).includes(q2)));
-    grid.replaceChildren(...(vis.length ? vis.map(card) : [h('div', { class: 'empty', text: lista.length ? 'Nenhum projeto com esse filtro.' : 'Nenhum projeto ainda. Toque em “Novo projeto”.' })]));
-  }
+  const lista = data.projetos || [];
+  const grupos = CATS.map(([k, t]) => [k, t, lista.filter((p) => catDe(p) === k)]).filter(([k, , ps]) => ps.length || k === 'restaurantes');
+  const secs = grupos.map(([k, t, ps]) => h('section', { class: 'cat' },
+    h('header', { class: 'cat-hd' }, h('span', { class: 'selo ' + CAT_TOM[k] }, ic(CAT_IC[k])),
+      h('div', { class: 'cat-tt' }, h('h2', { text: t }), h('small', { class: 'muted', text: plural(ps.length, 'projeto', 'projetos') })),
+      CAT_BUSCA[k] ? h('div', { class: 'pg-acts' }, h('button', { class: 'btn sm', type: 'button', onclick: () => ir('radar?q=' + encodeURIComponent(CAT_BUSCA[k]), true) }, icApp('radar'), 'Achar ' + t.toLowerCase() + ' no Maps')) : null),
+    ps.length ? h('div', { class: 'pjs2' }, ps.map(cardProjeto)) : null,
+    k === 'restaurantes' ? blocoVisitasProj() : null));
   v.replaceChildren(h('div', { class: 'pg' },
-    cabeca('Clientes e projetos', 'Propostas, sites, versões e PDFs de cada cliente',
+    cabeca('Projetos', 'O que você vende, com a prévia ao vivo de cada um',
       h('button', { class: 'btn ghost icon-btn', type: 'button', title: 'Recarregar', 'aria-label': 'Recarregar', onclick: async () => { busy('Recarregando…'); try { await loadData(); idle(); appView(); toast('Atualizado.', 'ok', 1500); } catch (e) { fail(e); } } }, ic('sync')),
-      h('button', { class: 'btn primary', type: 'button', onclick: () => editDrawer(null) }, ic('plus'), 'Novo projeto')),
-    h('div', { class: 'tools' }, search), chips, grid,
-    h('p', { class: 'foot' }, 'Guardado no servidor da Star-net', data.atualizado ? ' · atualizado em ' + dataBR(data.atualizado) : '', '.')));
-  renderGrid();
+      h('button', { class: 'btn', type: 'button', onclick: () => editDrawer(null) }, ic('plus'), 'Novo projeto')),
+    ...secs));
 };
 
 async function connectDrawer() {
@@ -1132,17 +1162,6 @@ function sairView() {
   loginView(todos ? 'Saiu de todos os aparelhos.' : 'Saiu deste aparelho.', true);
 }
 
-function card(p) {
-  const links = (p.links || []).slice().sort((a, b) => ['site', 'demo', 'versao', 'outro', 'repo'].indexOf(a.tipo) - ['site', 'demo', 'versao', 'outro', 'repo'].indexOf(b.tipo)).filter((l) => l.tipo !== 'repo').slice(0, 2);
-  const nP = (p.pdfs || []).length; const nL = (p.links || []).length;
-  return h('article', { class: 'proj', tabindex: '0', role: 'button', 'aria-label': 'Abrir ' + p.nome, onclick: () => detailDrawer(p), onkeydown: (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); detailDrawer(p); } } },
-    h('div', { class: 'hd' }, h('h3', { text: p.nome }), statusPill(p.status)),
-    p.cliente ? h('p', { class: 'cli', text: p.cliente }) : null,
-    p.resumo ? h('p', { class: 'res', text: p.resumo }) : null,
-    links.length ? h('div', { class: 'acts' }, links.map((l) => h('a', { class: 'btn sm', href: l.url, target: '_blank', rel: 'noopener noreferrer', onclick: (ev) => { ev.stopPropagation(); if (canFrame(l.url)) { ev.preventDefault(); viewSite(l); } } }, l.rotulo || hostOf(l.url), ic(canFrame(l.url) ? 'eye' : 'ext')))) : null,
-    h('p', { class: 'meta', text: [nL ? nL + (nL === 1 ? ' link' : ' links') : '', nP ? nP + ' PDF' + (nP === 1 ? '' : 's') : ''].filter(Boolean).join(' · ') || 'Sem links nem PDFs' }));
-}
-
 // ---------------------------------------------------------------- gaveta (detalhe e edição)
 let drawerEl = null; let lastFocus = null;
 function closeDrawer() { if (typeof closeViewer === 'function' && viewerEl) closeViewer(); document.body.classList.remove('has-drawer'); if (drawerEl) { drawerEl.remove(); drawerEl = null; document.removeEventListener('keydown', escClose); if (lastFocus && lastFocus.isConnected) lastFocus.focus(); } }
@@ -1159,7 +1178,7 @@ function detailDrawer(p) {
   const groups = TIPOS.map(([k, t]) => [t, (p.links || []).filter((l) => (TIPO_TXT[l.tipo] ? l.tipo : 'outro') === k)]).filter(([, ls]) => ls.length);
   const pdfs = p.pdfs || [];
   openDrawer('dt-title',
-    h('header', {}, h('div', { class: 'tt' }, h('h2', { id: 'dt-title', text: p.nome }), h('div', {}, statusPill(p.status))),
+    h('header', {}, h('div', { class: 'tt' }, h('h2', { id: 'dt-title', text: p.nome }), h('small', { class: 'muted', text: CAT_TXT[catDe(p)] })),
       h('button', { class: 'btn ghost icon-btn', type: 'button', 'aria-label': 'Fechar', onclick: closeDrawer }, ic('x'))),
     [
       p.cliente || p.resumo ? h('div', { class: 'sec' }, p.cliente ? h('p', { class: 'lead', text: p.cliente }) : null, p.resumo ? h('p', { class: 'lead', text: p.resumo }) : null) : null,
@@ -1178,11 +1197,11 @@ function detailDrawer(p) {
 
 function editDrawer(orig) {
   const isNew = !orig;
-  const p = orig ? JSON.parse(JSON.stringify(orig)) : { id: '', nome: '', cliente: '', status: 'andamento', resumo: '', links: [], pdfs: [], notas: '' };
+  const p = orig ? JSON.parse(JSON.stringify(orig)) : { id: '', nome: '', cliente: '', categoria: 'restaurantes', resumo: '', links: [], pdfs: [], notas: '' };
   const nome = h('input', { class: 'input', value: p.nome, required: true, maxlength: 120 });
   const cliente = h('input', { class: 'input', value: p.cliente || '', maxlength: 160 });
-  const status = h('select', { class: 'input' }, STATUS.map(([k, t]) => h('option', { value: k, text: t })));
-  status.value = STATUS_TXT[p.status] ? p.status : 'sem';
+  const categoria = h('select', { class: 'input' }, CATS.map(([k, t]) => h('option', { value: k, text: t })));
+  categoria.value = catDe(p);
   const resumo = h('textarea', { class: 'input', rows: 3, maxlength: 600 }); resumo.value = p.resumo || '';
   const notas = h('textarea', { class: 'input', rows: 5, maxlength: 6000 }); notas.value = p.notas || '';
 
@@ -1243,7 +1262,7 @@ function editDrawer(orig) {
         const up = await enviarPdf(a.file, fname);
         keep.push({ nome: a.nome, id: up.id, arquivo: fname, data: hoje(), tamanho: a.file.size });
       }
-      const np = { ...p, id, nome: n, cliente: cliente.value.trim(), status: status.value, resumo: resumo.value.trim(), links, pdfs: keep, notas: notas.value.replace(/\s+$/, '') };
+      const np = { ...p, id, nome: n, cliente: cliente.value.trim(), categoria: categoria.value, resumo: resumo.value.trim(), links, pdfs: keep, notas: notas.value.replace(/\s+$/, '') };
       const k = nd.projetos.findIndex((x) => x.id === p.id);
       if (isNew || k < 0) nd.projetos.push(np); else nd.projetos[k] = np;
       busy('Salvando…');
@@ -1268,7 +1287,7 @@ function editDrawer(orig) {
       h('button', { class: 'btn ghost icon-btn', type: 'button', 'aria-label': 'Fechar', onclick: () => (isNew ? closeDrawer() : detailDrawer(orig)) }, ic('x'))),
     h('div', { class: 'form' },
       h('label', { class: 'field' }, h('span', { text: 'Nome' }), nome),
-      h('div', { class: 'two' }, h('label', { class: 'field' }, h('span', { text: 'Cliente' }), cliente), h('label', { class: 'field' }, h('span', { text: 'Status' }), status)),
+      h('div', { class: 'two' }, h('label', { class: 'field' }, h('span', { text: 'Cliente' }), cliente), h('label', { class: 'field' }, h('span', { text: 'Categoria' }), categoria)),
       h('label', { class: 'field' }, h('span', { text: 'Resumo' }), resumo),
       h('div', { class: 'sec' }, h('h4', { text: 'Sites e versões' }), linksBox, h('div', {}, h('button', { class: 'btn sm', type: 'button', onclick: () => { const r = linkRow(); linksBox.append(r); r.querySelector('input').focus(); } }, ic('plus'), 'Adicionar link'))),
       h('div', { class: 'sec' }, h('h4', { text: 'PDFs' }), pdfBox, h('label', { class: 'file btn sm' }, ic('plus'), 'Adicionar PDF', h('span', { class: 'sr' }, fileIn))),
@@ -1312,6 +1331,7 @@ window.__snPonte = {
   sessaoVencida: (e) => { if (e instanceof SessaoError) fail(e); },
   toast: (msg, tipo) => toast(msg, tipo === 'ok' ? 'ok' : tipo === 'err' ? 'err' : 'info', tipo === 'err' ? 6000 : 3200),
   ir: (r) => ir(r, true),
+  novaVisita: (pre) => visitaDrawer(null, pre),
   mudou: (app, what) => { CEN.em = 0; if (app === 'amazon' && what !== 'chat' && MOD_P.amazon) MOD_P.amazon.then((m) => { ALERTAS_EM = 0; atualizaAlertas(m, true); }).catch(() => {}); },
 };
 start().catch((e) => setupView(e.message));
