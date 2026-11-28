@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Star-net.pro · App</title>
+<meta name="description" content="Star-net.pro: as demonstrações em um só lugar, no celular ou no computador.">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0b0b0f" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Star-net">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+  /* Barra de abas no estilo do iOS (como a do Expo Router): 49 pt de altura, material translúcido, linha fina em cima,
+     ícone de 25 pt com rótulo de 10 pt, aba ativa na cor da marca. Cada aba é uma tela inteira em cima da barra. */
+  :root {
+    --tint: #1d4ed8; --tint-soft: rgba(29, 78, 216, .14); --gray: #667085;
+    --bar-bg: rgba(249, 249, 249, .88); --bar-line: rgba(60, 60, 67, .29); --page: #ffffff;
+    --bar-h: 49px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --tint: #6b9bff; --tint-soft: rgba(107, 155, 255, .2); --gray: #98989f; --bar-bg: rgba(29, 29, 31, .88); --bar-line: rgba(84, 84, 88, .65); --page: #0b0b0f; }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; background: var(--page); }
+  body { display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; color: #111;
+         font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", Roboto, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  #stage { position: relative; flex: 1 1 auto; min-height: 0; }
+  .panel { position: absolute; inset: 0; visibility: hidden; }
+  .panel.on { visibility: visible; }
+  .panel iframe { display: block; width: 100%; height: 100%; border: 0; background: var(--page); }
+  .loader { position: absolute; inset: 0; display: grid; place-items: center; background: var(--page); z-index: 1; transition: opacity .25s; }
+  .loader::after { content: ""; width: 28px; height: 28px; border-radius: 50%; border: 3px solid var(--tint-soft); border-top-color: var(--tint); animation: spin .8s linear infinite; }
+  .panel.loaded .loader { opacity: 0; pointer-events: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .tabbar { position: relative; z-index: 2; flex: 0 0 auto; display: flex; justify-content: center;
+            padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            background: var(--bar-bg); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px);
+            border-top: .5px solid var(--bar-line); }
+  .tabs { display: flex; width: 100%; max-width: 640px; }
+  .tab { flex: 1 1 0; min-width: 0; height: var(--bar-h); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+         color: var(--gray); text-decoration: none; font-size: 10px; font-weight: 500; letter-spacing: .01em; line-height: 1.1;
+         -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: color .15s, transform .12s; }
+  .tab svg { width: 25px; height: 25px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: fill .15s; }
+  .tab span { max-width: 100%; padding: 0 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tab[aria-selected="true"] { color: var(--tint); }
+  .tab[aria-selected="true"] svg { fill: var(--tint-soft); stroke-width: 2; }
+  .tab:active { transform: scale(.92); }
+  .tab:focus-visible { outline: 2px solid var(--tint); outline-offset: -4px; border-radius: 12px; }
+  /* telas largas (computador, iPad): a barra ganha um pouco mais de altura e de letra, e fica mais curta no meio */
+  @media (min-width: 900px) {
+    :root { --bar-h: 58px; }
+    .tabs { max-width: 600px; }
+    .tab { font-size: 11px; gap: 3px; }
+    .tab svg { width: 26px; height: 26px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .tab, .tab svg, .loader { transition: none; } .loader::after { animation-duration: 2.4s; } }
+  noscript { display: block; padding: 24px; font: 16px/1.6 system-ui, sans-serif; }
+</style>
+</head>
+<body>
+<main id="stage" aria-live="polite"></main>
+<nav class="tabbar" aria-label="Star-net.pro">
+  <div class="tabs" id="tabs" role="tablist"></div>
+</nav>
+<noscript>
+  <p>Para usar o app, ligue o JavaScript. Ou abra direto:
+    <a href="/">Landing</a> · <a href="/m/demo/">Cardápio 3D</a> · <a href="/imobiliaria/">Imobiliária</a> ·
+    <a href="/dads-burger-painel/">Painel do restaurante</a> · <a href="/dads-burger/">Site de pedidos</a> · <a href="/starnet-clinicas/">Clínicas</a></p>
+</noscript>
+<script>
+(function () {
+  'use strict';
+  // Os seis destinos. Todos são páginas do próprio star-net.pro (mesma origem), então cabem em quadros dentro das abas.
+  var TABS = [
+    { id: 'inicio',   label: 'Início',   title: 'Landing da Star-net',                      url: '/',                      icon: 'home' },
+    { id: 'cardapio', label: 'Cardápio', title: 'Cardápio 3D (demo)',                        url: '/m/demo/',               icon: 'cube' },
+    { id: 'imoveis',  label: 'Imóveis',  title: 'Imobiliária, só para ver',                  url: '/imobiliaria/',          icon: 'building' },
+    { id: 'painel',   label: 'Painel',   title: "Painel do restaurante (Dad's Burger)",      url: '/dads-burger-painel/',   icon: 'dash' },
+    { id: 'pedidos',  label: 'Pedidos',  title: "Site de pedidos do Dad's Burger",           url: '/dads-burger/',          icon: 'bag' },
+    { id: 'clinicas', label: 'Clínicas', title: 'Clínicas',                                  url: '/starnet-clinicas/',     icon: 'cross' }
+  ];
+  var ICONS = {
+    home:     '<path d="M3.5 10.6 12 3.6l8.5 7v9.1a1.2 1.2 0 0 1-1.2 1.2h-4.4v-5.7H9.1v5.7H4.7a1.2 1.2 0 0 1-1.2-1.2z"/>',
+    cube:     '<path d="M12 3 4 7.4v9.2L12 21l8-4.4V7.4z"/><path d="M4 7.4 12 12l8-4.6M12 12v9"/>',
+    building: '<path d="M4.5 21V6.2A1.2 1.2 0 0 1 5.7 5h7.6a1.2 1.2 0 0 1 1.2 1.2V21"/><path d="M14.5 10h3.8a1.2 1.2 0 0 1 1.2 1.2V21M3 21h18"/><path d="M8 9h2.4M8 12.5h2.4M8 16h2.4"/>',
+    dash:     '<rect x="3.5" y="3.5" width="7.3" height="9" rx="1.6"/><rect x="13.2" y="3.5" width="7.3" height="5.2" rx="1.6"/><rect x="13.2" y="11.5" width="7.3" height="9" rx="1.6"/><rect x="3.5" y="15.5" width="7.3" height="5" rx="1.6"/>',
+    bag:      '<path d="M5.6 8.2h12.8l-1 12H6.6z"/><path d="M9 8.2V7a3 3 0 0 1 6 0v1.2"/>',
+    cross:    '<path d="M12 20.5S4 15.8 4 9.9A4.2 4.2 0 0 1 12 8a4.2 4.2 0 0 1 8 1.9c0 5.9-8 10.6-8 10.6z"/><path d="M7.6 12.2h2.2l1.2-2.1 2 4 1.2-1.9h2.2"/>'
+  };
+  var ALLOW = 'camera; xr-spatial-tracking; accelerometer; gyroscope; magnetometer; fullscreen; clipboard-write; web-share';
+  var stage = document.getElementById('stage');
+  var bar = document.getElementById('tabs');
+  var panels = {};
+  var current = null;
+
+  bar.innerHTML = TABS.map(function (t) {
+    return '<a class="tab" role="tab" id="tab-' + t.id + '" href="#' + t.id + '" data-id="' + t.id + '" aria-controls="p-' + t.id + '" aria-selected="false" aria-label="' + t.title.replace(/"/g, '&quot;') + '">' +
+      '<svg viewBox="0 0 24 24" aria-hidden="true">' + ICONS[t.icon] + '</svg><span>' + t.label + '</span></a>';
+  }).join('');
+
+  function find(id) { for (var i = 0; i < TABS.length; i++) if (TABS[i].id === id) return TABS[i]; return null; }
+
+  function panelOf(t) {
+    if (panels[t.id]) return panels[t.id];
+    var p = document.createElement('div');
+    p.className = 'panel'; p.id = 'p-' + t.id; p.setAttribute('role', 'tabpanel'); p.setAttribute('aria-labelledby', 'tab-' + t.id);
+    p.innerHTML = '<div class="loader" aria-hidden="true"></div><iframe title="' + t.title.replace(/"/g, '&quot;') + '" allow="' + ALLOW + '" allowfullscreen></iframe>';
+    var f = p.querySelector('iframe');
+    f.addEventListener('load', function () { p.classList.add('loaded'); });
+    setTimeout(function () { p.classList.add('loaded'); }, 3500);   // páginas pesadas (3D, painéis) já aparecem sendo desenhadas: o aviso de carregando não segura
+    f.src = t.url;                      // só carrega na primeira vez que a aba é aberta; depois fica viva, como numa barra de abas de verdade
+    stage.appendChild(p);
+    panels[t.id] = p;
+    return p;
+  }
+
+  function select(id, fromHash) {
+    var t = find(id) || TABS[0];
+    if (current === t.id) {
+      // tocar na aba que já está aberta volta para a tela inicial dela (como no iOS)
+      if (!fromHash) { var f0 = panelOf(t).querySelector('iframe'); if (f0.contentWindow && f0.contentWindow.location.pathname !== t.url) f0.src = t.url; }
+      return;
+    }
+    current = t.id;
+    var p = panelOf(t);
+    Object.keys(panels).forEach(function (k) { panels[k].classList.toggle('on', k === t.id); });
+    TABS.forEach(function (x) { var a = document.getElementById('tab-' + x.id); a.setAttribute('aria-selected', x.id === t.id ? 'true' : 'false'); a.tabIndex = x.id === t.id ? 0 : -1; });
+    document.title = t.title + ' · Star-net.pro';
+    if (location.hash !== '#' + t.id) history.replaceState(null, '', '#' + t.id);
+    try { sessionStorage.setItem('starnet.tab', t.id); } catch (e) { /* sem armazenamento */ }
+    void p;
+  }
+
+  bar.addEventListener('click', function (e) {
+    var a = e.target.closest ? e.target.closest('.tab') : null;
+    if (!a) return;
+    e.preventDefault();
+    select(a.dataset.id, false);
+  });
+  bar.addEventListener('keydown', function (e) {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    var i = TABS.map(function (t) { return t.id; }).indexOf(current);
+    var n = TABS[(i + (e.key === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length];
+    select(n.id, false); document.getElementById('tab-' + n.id).focus(); e.preventDefault();
+  });
+  window.addEventListener('hashchange', function () { select(location.hash.slice(1), true); });
+
+  var first = location.hash.slice(1);
+  if (!find(first)) { try { first = sessionStorage.getItem('starnet.tab') || ''; } catch (e) { first = ''; } }
+  select(find(first) ? first : TABS[0].id, true);
+})();
+</script>
+</body>
+</html>

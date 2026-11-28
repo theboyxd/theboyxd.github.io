@@ -1,0 +1,17 @@
+{
+  "name": "Star-net.pro",
+  "short_name": "Star-net",
+  "description": "As demonstrações da Star-net.pro em um só lugar.",
+  "lang": "pt-BR",
+  "start_url": "/app/",
+  "scope": "/app/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
